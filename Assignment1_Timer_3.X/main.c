@@ -4,6 +4,7 @@
  *
  * Created on April 10, 2024, 9:51 AM
  */
+#include "timer.h"
 
 
 int main(void) {
