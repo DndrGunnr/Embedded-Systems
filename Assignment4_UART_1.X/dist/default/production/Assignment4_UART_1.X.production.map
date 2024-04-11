@@ -223,9 +223,9 @@ __FUID0
 .comment
  *(.comment)
 
-.debug_info       0x000000        0xeb2
+.debug_info       0x000000        0xec4
  *(.debug_info)
- .debug_info      0x000000        0xeb2 build/default/production/main.o
+ .debug_info      0x000000        0xec4 build/default/production/main.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev     0x000000         0xeb

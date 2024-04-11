@@ -89,7 +89,11 @@ MP_LINKER_FILE_OPTION=,--script=p33EP512MU810.gld
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
+<<<<<<< HEAD
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/6f3e67aaf21e72a803b13ecbdd7d5243d68a14ca .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+=======
+${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/34da656b2440039a39a0e1f25f8b9a8b937e49e1 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+>>>>>>> 96cd0ac6a959900dc203008bc7a9070e5ee774ea
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.o.d 
 	@${RM} ${OBJECTDIR}/main.o 
@@ -105,7 +109,11 @@ ${OBJECTDIR}/timer.o: timer.c  .generated_files/flags/default/ec1501f7162119a872
 =======
 >>>>>>> 41911181317cdf217a298aeb7b48ec5352b04403
 else
+<<<<<<< HEAD
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/f4b329fc2e53829bd440f506158a1b025b707687 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+=======
+${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/d5dfb96cabb3516d2f628ecdebe0c9a56e6615a .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+>>>>>>> 96cd0ac6a959900dc203008bc7a9070e5ee774ea
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.o.d 
 	@${RM} ${OBJECTDIR}/main.o 
