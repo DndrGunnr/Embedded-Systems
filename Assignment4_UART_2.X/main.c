@@ -8,6 +8,7 @@
 
 #include "xc.h"
 #include "timer.h"
+#include "UART.h"
 
 void __attribute__((__interrupt__, no_auto_psv__)) _T3Interrupt(){
     
@@ -16,10 +17,20 @@ void __attribute__((__interrupt__, no_auto_psv__)) _T3Interrupt(){
     LATAbits.LATA0 = (!LATAbits.LATA0);
 }
 
+void __attribute__((__interrupt__, no_auto_psv__))_U1RXInterrupt(){
+    char carattere;
+    IFS0bits.U1RXIF=0;
+    carattere=U1RXREG;
+    U1TXREG=carattere;
+    LATAbits.LATA0 = (!LATAbits.LATA0);
+    //Flag raised each time a character is received 
+    U1STAbits.URXISEL=0;
+}
 
 void algorithm() {
     tmr_wait_ms(TIMER2, 7);
 }
+
 int main() {
     int ret;
     //LED2 as output
@@ -31,6 +42,8 @@ int main() {
     tmr_setup_period(TIMER3, 100);
     // activate enable for interrupts
     IEC0bits.T3IE = 1;
+    // Setup UART
+    uart_setup(468);
     
     while(1) {
         algorithm();
