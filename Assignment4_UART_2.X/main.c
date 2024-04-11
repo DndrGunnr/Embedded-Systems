@@ -22,7 +22,7 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1RXInterrupt(){
     IFS0bits.U1RXIF=0;
     carattere=U1RXREG;
     U1TXREG=carattere;
-    LATAbits.LATA0 = (!LATAbits.LATA0);
+    //LATAbits.LATA0 = (!LATAbits.LATA0);
     //Flag raised each time a character is received 
     U1STAbits.URXISEL=0;
 }
