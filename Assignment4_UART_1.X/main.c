@@ -1,10 +1,9 @@
 /*
  * File:   main.c
- * Author: enric
+ * Author: utente
  *
- * Created on March 21, 2024, 3:44 PM
+ * Created on April 11, 2024, 12:38 PM
  */
-
 
 #include "xc.h"
 
