@@ -43,7 +43,7 @@ int main() {
     // activate enable for interrupts
     IEC0bits.T3IE = 1;
     // Setup UART
-    uart_setup(468);
+    uart_setup(9600);
     
     while(1) {
         algorithm();
