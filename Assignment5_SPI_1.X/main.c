@@ -8,6 +8,7 @@
 
 #include <p33EP512MU810.h>
 #include "string.h"
+#include "stdio.h"
 #include "xc.h"
 
 uint16_t NEW_COMM;
@@ -34,11 +35,12 @@ void send_string(char *input_string){
 }
 
 int main(void) {
-    //debug bit
-    TRISGbits.TRISG9 = 0; // output
-    LATGbits.LATG9=1;
     // disable analog pin
     ANSELA = ANSELB = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000;
+    //debug led
+    TRISAbits.TRISA0 = 0; // output
+    
+
     
     //setup of pin for SPI connection
     TRISAbits.TRISA1 = 1; // RA1-RPI17 MISO
@@ -122,7 +124,9 @@ int main(void) {
     sprintf(toSend, "roba: %d", chip_ID);
     send_string(toSend);
     
-    while(1);
+    while(1){
+        LATAbits.LATA0=1;
+    }
     
             
     return 0;
