@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:Assignment4_UART_1.X/.generated_files/flags/default/6f3e67aaf21e72a803b13ecbdd7d5243d68a14ca
- -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"C:\Users\enric\OneDrive - unige.it\Documents\1_ES\Embedded-System\Assignment4_UART_1.X\main.c
-========
- -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"C:\Users\utente\MPLABXProjects\Embedded_sys_repo\Assignment4_UART_2.X\UART.c
->>>>>>>> 96cd0ac6a959900dc203008bc7a9070e5ee774ea:Assignment4_UART_2.X/.generated_files/flags/default/51272913625d445abfa2846cb37094e75be0fd07
