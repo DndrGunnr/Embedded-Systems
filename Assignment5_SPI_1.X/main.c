@@ -117,7 +117,7 @@ int main(void) {
     SPI1BUF = 0x00; // clocking out zeros so that the other chip can send the
     while (SPI1STATbits.SPIRBF == 0);
     uint16_t chip_ID = SPI1BUF; // get the value from the register
-    TRISCbits.TRISC1=1;
+    TRISCbits.TRISC1 = 1;
 
     
     char toSend[100];
