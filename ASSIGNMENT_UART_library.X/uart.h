@@ -35,19 +35,33 @@
 #include "stdio.h"
 #include "string.h"
 
-int uart_setup(int TX_interrupt_type);
+#define uart_buff_dim 10 // circular buffer dimension
+#define FCY 72000000 
 
-void buffer_setup(char *buff, uint16_t buff_size);
-void buffer_destroy(char *buff);
+// set all UART mode, pin, interrupts ecc
+int uart_setup(int TX_interrupt_type); 
 
-int is_buffer_full(uint16_t buff_size, uint16_t elem_num);
-int is_buffer_empty(uint16_t elem_num);
+//return 1 if circular buffer is full, 0 otherwise
+int uart_is_buff_full();
 
-int buffer_add(char *buff, char value, uint16_t *tail, uint16_t *elem_num, uint16_t size);
-int buffer_remove(char *buff, uint16_t *head, uint16_t *elem_num, uint16_t size);
+//return 1 if circular buffer is empty, 0 otherwise
+int uart_is_buff_empty();
 
-void send_char(char carattere);
-void send_string(char *input_string);
+// add one char to the buffer
+int uart_buff_add();
+
+// remove the first char from the buffer
+int uart_buff_rmv();
+
+// send on TX reg the char in the uart_head position in the buffer
+void uart_send_head();
+
+// function used to print the generic string or char on TX reg
+void uart_send_char(char carattere);
+void uart_send_string(char *input_string);
+
+// print in the index info of the buffer: element_number, head_indx, tail_indx
+void uart_log_buffer_info();
 
 #ifdef	__cplusplus
 #endif 

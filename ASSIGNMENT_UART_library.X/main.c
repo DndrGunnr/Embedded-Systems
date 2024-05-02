@@ -11,28 +11,24 @@
 #include "stdio.h"
 #include "string.h"
 
-#define dim 10
+// ---------------------------------------- TO ADD ----------------------------------- //
+/* 1) Controllo dell'interrupt di OERR per evitare overflow di RX reg
+ * 2) Valutare bene tutti i possibili controlli degli interrupt 
+ * 3) input per aggiunta o rimozioni del PARITY bit
+ * 4) Funzione di invio di n char dalla testa in poi
+ * 5) Auto selezione del BAUDE rate
+ * 6) --- altro ???---
+ */
+// ---------------------------------------- TO ADD ----------------------------------- //
 
-char buffer[dim];
-
-
-uint16_t elem_num_var;
-uint16_t tail_var;
-uint16_t head_var;
 
 uint16_t new_char;
-uint16_t *elem_num = &elem_num_var;
-uint16_t *tail = &tail_var;
-uint16_t *head = &head_var;
-
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1RXInterrupt(void){
     IFS0bits.U1RXIF = 0; // reset the flag of the RX reg
     
-    //leggo nuovo elemento --> salvo elemento nel buffer
     new_char = 1;
-    char temp = U1RXREG;
-    buffer_add(buffer, temp, tail, elem_num, dim);
+    uart_buff_add();
 }
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void){
@@ -50,37 +46,13 @@ int main(void) {
     LATAbits.LATA0 = 0; // start in OFF state
     
     uart_setup(1);
-    
-    // variable set up
-    elem_num_var = 0;
-    tail_var = 0;
-    head_var = 0;
-    
-    //buffer_setup(buffer, dim);
-    //char toSend[100];
+    new_char = 0;
     
     while(1){
-        //every time 5 char are present in the buffer send the string 
         if(new_char == 1){
-            send_char(buffer[head_var]);
-            
-            if(*elem_num > 0){
-                LATGbits.LATG9 = 1; // start in OFF state
-            }
-            
-            if(*head > 0){
-                LATAbits.LATA0 = 1; // start in OFF state
-            }
-            
-            /*sprintf(toSend, "%d,%d,%d", elem_num_var, head_var, tail_var);
-            send_string(toSend);
-            while(IFS0bits.U1TXIF != 1){}*/
-            
-            buffer_remove(buffer, head, elem_num, dim);
+            uart_send_head();
+            uart_buff_rmv();
             new_char = 0;
-            
-            /*sprintf(toSend, "%d,%d,%d;", elem_num_var, head_var, tail_var);
-            send_string(toSend);*/
         }
     }
     return 0;
