@@ -9,6 +9,8 @@
 #include <p33EP512MU810.h>
 #include "string.h"
 #include "stdio.h"
+#include "timer.h"
+#include "spi.h"
 #include "xc.h"
 
 uint16_t NEW_COMM;
@@ -40,26 +42,7 @@ int main(void) {
     //debug led
     TRISAbits.TRISA0 = 0; // output
     
-
-    
-    //setup of pin for SPI connection
-    TRISAbits.TRISA1 = 1; // RA1-RPI17 MISO
-    TRISFbits.TRISF12 = 0; //RF12 -RP108 clock
-    TRISFbits.TRISF13 = 0; // RF13-RP109 MOSI
-    
-    RPINR20bits.SDI1R = 0b0010001; //mapping pin SDI1 (MISO) to pin RPI17
-    RPOR12bits.RP109R = 0b000101; //mapping SDO1 (MOSI) to pin RF13
-    RPOR11bits.RP108R= 0b000110; //SPI clock
-    //setup of registers for SPI specs
-    SPI1CON1bits.MSTEN=1;// master mode
-    SPI1CON1bits.MODE16=0; //8-bit mode 
-    SPI1CON1bits.PPRE= 1; // 16:1
-    SPI1CON1bits.SPRE= 0; // 8:1 -> resulting frequency is 562.5 KHz !!THIS IS A TRY!!
-    SPI1CON1bits.CKP = 1; //idle clock for some reason
-    SPI1STATbits.SPIEN= 1; //SPI enable
-    //setup UART
-    
-
+    spi_setup();
     
     // UART SET UP
     RPINR18bits.U1RXR = 0x4b; // the input needs to be remapped to a particular pin
@@ -76,57 +59,45 @@ int main(void) {
     U1STAbits.UTXISEL1 = 0; 
     // setting the TX interr to trigger when all the trasmission have occurred, than i can 
     // re enable the buttons
-    IEC0bits.U1TXIE = 1; // enable the TX interrupt
+    IEC0bits.U1TXIE = 0; // enable the TX interrupt
     
     // RX reg INTERR
     U1STAbits.URXISEL0 = 0; // RX interr set to trigger for every char recived
     U1STAbits.URXISEL1 = 0;
     
-    IEC0bits.U1RXIE = 1; // RX interr enable
+    IEC0bits.U1RXIE = 0; // RX interr enable
     
     //magnetometer setting to sleep mode->change bit 0 of register 0x4B to "1"
-    TRISCbits.TRISC1=0;
-    uint16_t power_control_reg= 0x4B;
-    while(SPI1STATbits.SPITBF==1);
-    SPI1BUF= power_control_reg | 0x00; //setting MSB of register to "0" using bit-wise OR
-    while(SPI1STATbits.SPIRBF==0); //waiting for something to show up
-    uint16_t trash= SPI1BUF;
-    while(SPI1STATbits.SPITBF==1);
-    SPI1BUF=0x01;
-    while(SPI1STATbits.SPIRBF==0);
-    trash=SPI1BUF;
+    LATDbits.LATD6=0; //set pin value to low to begin communication 
+    uint8_t power_control_reg= 0x4B;
+    uint8_t trash;
+    trash=spi_write(power_control_reg);
+    trash=spi_write(0x01);
+    LATDbits.LATD6=1;
+    tmr_wait_ms(TIMER1,2);
     
     //magnetometer setting to active mode -> change bit 1 & 2 of register 0x4C to "0" "0"
-    uint16_t OpMode_reg=0x4C;
-    while(SPI1STATbits.SPITBF==1);
-    SPI1BUF= OpMode_reg | 0x00; //setting MSB of register to "0" using bit-wise OR
-    while(SPI1STATbits.SPIRBF==0); //waiting for something to show up
-    trash= SPI1BUF;
-    while(SPI1STATbits.SPITBF==1);
-    SPI1BUF=0x00;
-    while(SPI1STATbits.SPIRBF==0);
-    trash=SPI1BUF;
+    LATDbits.LATD6=0;
+    uint8_t OpMode_reg=0x4C;
+    trash=spi_write(OpMode_reg);
+    trash=spi_write(0x00);
+    LATDbits.LATD6=1;
+    tmr_wait_ms(TIMER1,2);    
     
     //chipId acquisition
-    uint16_t chipId_reg= 0x40;
-    while (SPI1STATbits.SPITBF == 1);
-    SPI1BUF = chipId_reg | 0x80; // setting the MSB to 1
-    while (SPI1STATbits.SPIRBF == 0);
-    trash = SPI1BUF; // read to prevent buffer overrun
-    while (SPI1STATbits.SPITBF == 1);
-    SPI1BUF = 0x00; // clocking out zeros so that the other chip can send the
-    while (SPI1STATbits.SPIRBF == 0);
-    uint16_t chip_ID = SPI1BUF; // get the value from the register
-    TRISCbits.TRISC1=1;
-
+    LATDbits.LATD6=0;
+    uint8_t chipId_reg= 0x40;
+    trash=spi_write(chipId_reg | read_mask);
+    uint8_t chip_ID = spi_write(0x00); // get the value from the register
+    LATDbits.LATD6=1; //put value of CS to 1 to end communication
     
     char toSend[100];
-    sprintf(toSend, "roba: %d", chip_ID);
+    sprintf(toSend,"%x", chip_ID);
+    LATAbits.LATA0=1;
     send_string(toSend);
+
     
-    while(1){
-        LATAbits.LATA0=1;
-    }
+    while(1);
     
             
     return 0;
