@@ -80,7 +80,7 @@ int uart_setup(int TX_interrupt_type) {
     // RX reg INTERR, fixed on interrupt on single char recived
     U1STAbits.URXISEL0 = 0; // RX interr set to trigger for every char recived
     U1STAbits.URXISEL1 = 0;
-    IEC0bits.U1RXIE = 1; // RX interr enable
+    IEC0bits.U1RXIE = 0; // RX interr enable
 
     return 1;
 }
