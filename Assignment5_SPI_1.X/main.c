@@ -6,7 +6,6 @@
  */
 
 
-#include <p33EP512MU810.h>
 #include "string.h"
 #include "stdio.h"
 #include "timer.h"

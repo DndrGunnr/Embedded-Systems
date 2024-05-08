@@ -7,6 +7,8 @@
 
 
 #include "xc.h"
+#include "spi.h"
+#include "timer.h"
 
 
 void spi_setup(){
@@ -32,6 +34,25 @@ void spi_setup(){
     SPI1CON1bits.SPRE= 5; // 3:1 
     SPI1CON1bits.CKP = 1; //idle clock for some reason !!!
     SPI1STATbits.SPIEN= 1; //SPI enable    
+}
+
+void spi_magOn(){
+     //magnetometer setting to sleep mode->change bit 0 of register 0x4B to "1"
+    LATDbits.LATD6=0; //set pin value to low to begin communication 
+    uint8_t power_control_reg= 0x4B;
+    uint8_t trash;
+    trash=spi_write(power_control_reg);
+    trash=spi_write(0x01);
+    LATDbits.LATD6=1;
+    tmr_wait_ms(TIMER1,2);
+    
+    //magnetometer setting to active mode -> change bit 1 & 2 of register 0x4C to "0" "0"
+    LATDbits.LATD6=0;
+    uint8_t OpMode_reg=0x4C;
+    trash=spi_write(OpMode_reg);
+    trash=spi_write(0x00);
+    LATDbits.LATD6=1;
+    tmr_wait_ms(TIMER1,2);
 }
 
 int spi_write(unsigned int addr){

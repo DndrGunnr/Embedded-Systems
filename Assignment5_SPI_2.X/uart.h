@@ -28,15 +28,14 @@
 
 // This is a guard condition so that contents of this file are not included
 // more than once.  
-#ifndef XC_HEADER_TEMPLATE_H
 #define	XC_HEADER_TEMPLATE_H
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 #include "stdio.h"
 #include "string.h"
+#include "timer.h"
 
-#define uart_buff_dim 10 // circular buffer dimension
-#define FCY 72000000 
+#define uart_buff_dim 10 // circular buffer dimension 
 
 // set all UART mode, pin, interrupts ecc
 int uart_setup(int TX_interrupt_type); 
@@ -63,12 +62,5 @@ void uart_send_string(char *input_string);
 // print in the index info of the buffer: element_number, head_indx, tail_indx
 void uart_log_buffer_info();
 
-#ifdef	__cplusplus
-#endif 
-#ifdef	__cplusplus
-#endif 
 
-
-
-#endif	/* XC_HEADER_TEMPLATE_H */
 

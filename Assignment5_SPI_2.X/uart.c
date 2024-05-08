@@ -19,10 +19,23 @@ uint16_t uart_elem_cnt;
 uint16_t uart_tail;
 uint16_t uart_head;
 
+uint16_t new_char;
+
+void __attribute__((__interrupt__, no_auto_psv__))_U1RXInterrupt(void){
+    IFS0bits.U1RXIF = 0; // reset the flag of the RX reg
+    
+    new_char = 1;
+    uart_buff_add();
+}
+
+void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void){
+    IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
+}
+
 // possible TX_interrupt_type
-    //0: interrupt when tx reg EMPTY
-    //1: interrupt when all the transmit operations are completed
-    //2: interrupt when any char is transferred to the Transmit Shift register
+    //0: interrupt when any char is transfered to the Transmit Shift Register
+    //1: interrupt when the last character is removed from Transmit Shift Register
+    //2: interrupt when the last char is transferred to the Transmit Shift register
     //3: RESERVED
 int uart_setup(int TX_interrupt_type){
     // UART SET UP
@@ -72,7 +85,7 @@ int uart_is_buff_empty(){
 }
 
 int uart_buff_add(){
-    if(is_buffer_full()){
+    if(uart_is_buff_full()){
         return 0;// buffer is full, can't add any elements
                  // ADD SOME WAY TO DEBUG THIS ERROR
     }
@@ -86,7 +99,7 @@ int uart_buff_add(){
     return 1; // successfull operation return
 }
 int uart_buff_rmv(){
-    if(is_buffer_empty(uart_elem_cnt)){
+    if(uart_is_buff_empty(uart_elem_cnt)){
         return 0;// buffer is empty, can't remove any elements
     }
     
@@ -99,17 +112,19 @@ int uart_buff_rmv(){
 
 void uart_send_head(){
     // print the char in the head position
+    while(U1STAbits.UTXBF);
     U1TXREG = buffer[uart_head];
 }
 void uart_send_char(char carattere){
+    while(U1STAbits.UTXBF);
     U1TXREG = carattere;
 }
 void uart_send_string(char *input_string){
     char toSend_str[100];
     
-    sprintf(toSend_str, "%s", input_string);
+    strcpy(toSend_str, input_string);
     for (uint16_t i = 0; i < strlen(input_string); i++){
-        send_char(toSend_str[i]);
+        uart_send_char(toSend_str[i]);
     }
 }
 
@@ -117,5 +132,5 @@ void uart_log_buffer_info(){
     char toSend[100];
     // numero_elementi_nel_buffer, indice_testa, indice_coda
     sprintf(toSend, "%d,%d,%d", uart_elem_cnt, uart_head, uart_tail);
-    send_string(toSend);
+    uart_send_string(toSend);
 }

@@ -36,3 +36,4 @@
 
 int spi_write(unsigned int addr);
 void spi_setup();
+void spi_magOn();
