@@ -17,7 +17,7 @@
 #include "stdio.h"
 
 #define mag_buff_dim 5
-#define uart_buff_dim_tx 35 // circular buffer dimension
+#define uart_buff_dim_tx 36 // circular buffer dimension
 // aumentato a 35 per tenere conto dei segni '-', effetto: nessun effetto apparente 23.08
 #define uart_buff_dim_rx 30
 
@@ -36,6 +36,9 @@ uint16_t trash;
 int16_t LSB; //potrebbero creare conflitto --> tolti entrambi si è ciulata anche la x, z rimane ok
 int16_t MSB; // avvicinando il telefono la x si sistema, seconda prova valori paiono casuali
 
+char toSend[uart_buff_dim_tx];
+int16_t head = 1;
+
 // reinserite le definizioni come dei int16_t --> x, y ciulate; z ok
 
 // PROBLEMA : variabile counter mai inizializzata
@@ -44,6 +47,11 @@ int16_t MSB; // avvicinando il telefono la x si sistema, seconda prova valori pa
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
+    
+    while(U1STAbits.UTXBF == 0){
+        uart_send_char(toSend[head-1]);
+        head++;
+    }
 }
 
 int uart_setup(int TX_interrupt_type) {
@@ -86,7 +94,7 @@ int uart_setup(int TX_interrupt_type) {
 }
 
 void uart_send_char(char carattere) {
-    while (U1STAbits.UTXBF);
+    //while (U1STAbits.UTXBF);
     U1TXREG = carattere;
 }
 
@@ -118,7 +126,7 @@ void algorithm(){
 
 int main(void) {
     //setup
-    uart_setup(0); //set uart interrupt to fire each time a char is trans
+    uart_setup(1); //set uart interrupt to fire each time a char is trans
     spi_setup(); //set spi frequency at 6MHz
     spi_magOn(); //set magnetometer to active mode at 25 Hz
     
@@ -137,15 +145,18 @@ int main(void) {
     TRISGbits.TRISG9 = 0; // set led to output
 
     while(1){
-        if(SPI1STATbits.SPIROV == 0){
+        if(IFS0bits.U1TXIF == 1){
             LATGbits.LATG9 = 1;
-        }                    // notata la non accensione del led 22.53
+        }else{
+            LATGbits.LATG9 = 0;
+        }                   // notata la non accensione del led 22.53
                             // notata la mia idiozia --> led settato come input 23.33
                             // controllo con led bit SPIROV : nessuna accensione 23.36
                             // cambio con SPIROV == 0: led acceso (valori di x, y ancora fottuti)
         algorithm();
         if(counter == mag_buff_dim){
             counter=0;
+            head = 1;
             
             x_avg = x_sum/mag_buff_dim;
             y_avg = y_sum/mag_buff_dim;
@@ -157,7 +168,7 @@ int main(void) {
             //          viene sostituito con '5' a run time
             sprintf(toSend,"$MAG,%d,%d,%d,$YAW,%.2f",x_avg, y_avg, z_avg, yaw);
             // riduzione del carico di dati da inviare, effetto: nessun effetto apparente 23.04 (reinserisco il valore di yaw)
-            uart_send_string(toSend);
+            //uart_send_string(toSend);
             x_sum=0;y_sum=0;z_sum=0;
         }  
     }
