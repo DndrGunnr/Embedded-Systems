@@ -43,7 +43,7 @@ int uart_setup(int TX_interrupt_type){
         switch(TX_interrupt_type){
             case 0:U1STAbits.UTXISEL0 = 0;U1STAbits.UTXISEL1 = 0;break;
             case 1:U1STAbits.UTXISEL0 = 1;U1STAbits.UTXISEL1 = 0;break;
-            case 2:U1STAbits.UTXISEL0 = 0;U1STAbits.UTXISEL1 = 1;break;
+            case 2:U1STAbits.URXISEL0 = 0;U1STAbits.UTXISEL1 = 1;break;
             default:break;
         }
         IEC0bits.U1TXIE = 1; // enable the TX interrupt
