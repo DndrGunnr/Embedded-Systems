@@ -8,7 +8,6 @@
 
 #include <p33EP512MU810.h>
 
-ciao
 
 #include "xc.h"
 //#include "uart.h"
@@ -39,22 +38,14 @@ int16_t LSB; //potrebbero creare conflitto --> tolti entrambi si è ciulata anche
 int16_t MSB; // avvicinando il telefono la x si sistema, seconda prova valori paiono casuali
 
 char toSend[uart_buff_dim_tx];
-int16_t head = 1;
+int head = 0;
+int dim = 0;
 
 // reinserite le definizioni come dei int16_t --> x, y ciulate; z ok
 
 // PROBLEMA : variabile counter mai inizializzata
     // effetto inizializzazione globale: nessun effetto apparente 22.50
     // effetto inizializzazione nel main: nessun effetto apparente 22.55
-
-void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
-    IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
-    
-    while(U1STAbits.UTXBF == 0){
-        uart_send_char(toSend[head-1]);
-        head++;
-    }
-}
 
 int uart_setup(int TX_interrupt_type) {
     // UART SET UP
@@ -84,7 +75,8 @@ int uart_setup(int TX_interrupt_type) {
                 break;
             default:break;
         }
-        IEC0bits.U1TXIE = 1; // enable the TX interrupt
+        IEC0bits.U1TXIE = 0; // enable the TX interrupt
+        // FOR THE MOMENT !!!!!!!!!!!!!!!!
     }
 
     // RX reg INTERR, fixed on interrupt on single char recived
@@ -122,13 +114,37 @@ void __attribute__((__interrupt__, __auto_psv__))_T2Interrupt(void) {
     TMR2=0;
 }
 
+void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
+    IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
+    LATAbits.LATA0 = (!LATAbits.LATA0);
+    
+    //uart_send_char(toSend[head]);
+    U1TXREG = toSend[head];
+    head++;
+    
+    if(head >= dim){
+        IEC0bits.U1TXIE = 0;
+    }
+    
+    /*
+    if(head < dim){
+        while(U1STAbits.UTXBF == 0){
+            uart_send_char(toSend[head]);
+            head++;
+        }
+    }else{
+        LATAbits.LATA0 = 1;
+    }*/
+}
+    
+
 void algorithm(){
     tmr_wait_ms(TIMER1,7); 
 }
 
 int main(void) {
     //setup
-    uart_setup(1); //set uart interrupt to fire each time a char is trans
+    uart_setup(2); //set uart interrupt to fire each time a char is trans
     spi_setup(); //set spi frequency at 6MHz
     spi_magOn(); //set magnetometer to active mode at 25 Hz
     
@@ -138,27 +154,25 @@ int main(void) {
     y_sum = 0;
     z_sum = 0;
     
-    float x_avg;
-    float y_avg;
-    float z_avg;
+    double x_avg;
+    double y_avg;
+    double z_avg;
     
     tmr_setup_period(TIMER2, 40, 1);
     
     TRISGbits.TRISG9 = 0; // set led to output
+    TRISAbits.TRISA0 = 0; // set led to output
 
     while(1){
-        if(IFS0bits.U1TXIF == 1){
-            LATGbits.LATG9 = 1;
-        }else{
-            LATGbits.LATG9 = 0;
-        }                   // notata la non accensione del led 22.53
+                           // notata la non accensione del led 22.53
                             // notata la mia idiozia --> led settato come input 23.33
                             // controllo con led bit SPIROV : nessuna accensione 23.36
                             // cambio con SPIROV == 0: led acceso (valori di x, y ancora fottuti)
         algorithm();
         if(counter == mag_buff_dim){
+            
             counter=0;
-            head = 1;
+            head = 0;
             
             x_avg = x_sum/mag_buff_dim;
             y_avg = y_sum/mag_buff_dim;
@@ -171,9 +185,14 @@ int main(void) {
             // nota: divisione intera restituisce intero OK, mag_buff_dim non ha un TIPO in senso stretto
             //          viene sostituito con '5' a run time
             sprintf(toSend,"$MAG,%.0f,%.0f,%.0f,$YAW,%.2f",x_avg, y_avg, z_avg, yaw*(180.0/3.14));
+            dim = strlen(toSend);
             // riduzione del carico di dati da inviare, effetto: nessun effetto apparente 23.04 (reinserisco il valore di yaw)
             //uart_send_string(toSend);
             x_sum=0;y_sum=0;z_sum=0;
+            
+            
+            // send the first char to uart, kik start interrupt
+            IEC0bits.U1TXIE = 1; // attiva interrupt uart send
         }  
     }
    
