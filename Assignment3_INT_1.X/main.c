@@ -13,7 +13,6 @@ void __attribute__((__interrupt__, _auto_psv)) _T2Interrupt(void){
     //TMR2=0;
     LATGbits.LATG9 = (!LATGbits.LATG9);
     IFS0bits.T2IF = 0; // set timer flag to 0 --> to read next interrupt
-    
 }
 
 int main(void) {
