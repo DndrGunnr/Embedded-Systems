@@ -8,7 +8,6 @@
 
 #include <p33EP512MU810.h>
 
-ciao
 
 #include "xc.h"
 //#include "uart.h"
@@ -47,53 +46,9 @@ int16_t head = 1;
     // effetto inizializzazione globale: nessun effetto apparente 22.50
     // effetto inizializzazione nel main: nessun effetto apparente 22.55
 
-void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
-    IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
-    
-    while(U1STAbits.UTXBF == 0){
-        uart_send_char(toSend[head-1]);
-        head++;
-    }
-}
 
-int uart_setup(int TX_interrupt_type) {
-    // UART SET UP
 
-    RPINR18bits.U1RXR = 0x4b; // remapping the RX reg to the particular pin 
-    RPOR0bits.RP64R = 1; // activating the pin of the TX reg
 
-    // baude rate fixed to 9600 
-    U1BRG = 468;
-
-    U1MODEbits.UARTEN = 1; // enable uart COMMUNICATION
-    U1STAbits.UTXEN = 1; // enable uart trasrmission 
-
-    // TX reg INTERR type selection
-    if (TX_interrupt_type < 0 || TX_interrupt_type > 3) {
-        return 0;
-    } else {
-        switch (TX_interrupt_type) {
-            case 0:U1STAbits.UTXISEL0 = 0;
-                U1STAbits.UTXISEL1 = 0;
-                break;
-            case 1:U1STAbits.UTXISEL0 = 1;
-                U1STAbits.UTXISEL1 = 0;
-                break;
-            case 2:U1STAbits.UTXISEL0 = 0;
-                U1STAbits.UTXISEL1 = 1;
-                break;
-            default:break;
-        }
-        IEC0bits.U1TXIE = 1; // enable the TX interrupt
-    }
-
-    // RX reg INTERR, fixed on interrupt on single char recived
-    U1STAbits.URXISEL0 = 0; // RX interr set to trigger for every char recived
-    U1STAbits.URXISEL1 = 0;
-    IEC0bits.U1RXIE = 0; // RX interr enable
-
-    return 1;
-}
 
 void uart_send_char(char carattere) {
     //while (U1STAbits.UTXBF);

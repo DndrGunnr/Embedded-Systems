@@ -1,0 +1,1 @@
+ -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG     -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)     -mdfp="${DFP_DIR}/xc16"C:\Users\enric\OneDrive - unige.it\Documents\1_ES\Embedded-System\Assignment1_group9.X\timer.c

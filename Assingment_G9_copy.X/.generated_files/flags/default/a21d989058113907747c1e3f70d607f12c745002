@@ -1,0 +1,1 @@
+ -c -mcpu=$(MP_PROCESSOR_OPTION)      -mno-eds-warn  -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)     -mdfp="${DFP_DIR}/xc16"C:\Users\enric\OneDrive - unige.it\Documents\1_ES\Embedded-System\Assingment_G9_copy.X\spi.c
