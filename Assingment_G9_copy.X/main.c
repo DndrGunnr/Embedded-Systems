@@ -75,7 +75,7 @@ int uart_setup(int TX_interrupt_type) {
                 break;
             default:break;
         }
-        IEC0bits.U1TXIE = 0; // enable the TX interrupt
+        IEC0bits.U1TXIE = 1; // enable the TX interrupt
         // FOR THE MOMENT !!!!!!!!!!!!!!!!
     }
 
@@ -103,9 +103,9 @@ void uart_send_string(char *input_string) {
 
 void __attribute__((__interrupt__, __auto_psv__))_T2Interrupt(void) {
     IEC0bits.T2IE = 0;
-    x_sum = x_sum + spi_magRead(0x42,0x00F8,8);
-    y_sum = y_sum + spi_magRead(0x44,0x00F8,8);
-    z_sum = z_sum + spi_magRead(0x46,0x00FE,2);
+    x_sum =  spi_magRead(0x42,0x00F8,8);
+    y_sum =  spi_magRead(0x44,0x00F8,8);
+    z_sum =  spi_magRead(0x46,0x00FE,2);
     // utilizzo della sintassi estesa, effetto: nessun effetto apparente 23.10
     
     counter++;
@@ -115,36 +115,25 @@ void __attribute__((__interrupt__, __auto_psv__))_T2Interrupt(void) {
 }
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
-    IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
-    LATAbits.LATA0 = (!LATAbits.LATA0);
+    IFS0bits.U1TXIF = 0; // flag to zero
     
-    //uart_send_char(toSend[head]);
-    U1TXREG = toSend[head];
-    head++;
-    
-    if(head >= dim){
-        IEC0bits.U1TXIE = 0;
-    }
-    
-    /*
-    if(head < dim){
-        while(U1STAbits.UTXBF == 0){
-            uart_send_char(toSend[head]);
-            head++;
+    while(U1STAbits.UTXBF == 0){
+        if(head >= dim){
+            //IEC0bits.U1TXIE = 0; // disattivo interrupt
+            //LATGbits.LATG9 = (!LATGbits.LATG9);
+            //head = sdim;
+            break;
+        }else{
+            U1TXREG = toSend[head];
+            head = head + 1;
         }
-    }else{
-        LATAbits.LATA0 = 1;
-    }*/
+    }
 }
     
-
-void algorithm(){
-    tmr_wait_ms(TIMER1,7); 
-}
 
 int main(void) {
     //setup
-    uart_setup(2); //set uart interrupt to fire each time a char is trans
+    uart_setup(0); //set uart interrupt to fire each time a char is trans
     spi_setup(); //set spi frequency at 6MHz
     spi_magOn(); //set magnetometer to active mode at 25 Hz
     
@@ -158,7 +147,8 @@ int main(void) {
     double y_avg;
     double z_avg;
     
-    tmr_setup_period(TIMER2, 40, 1);
+    tmr_setup_period(TIMER2, 40);
+    IEC0bits.T2IE = 1;
     
     TRISGbits.TRISG9 = 0; // set led to output
     TRISAbits.TRISA0 = 0; // set led to output
@@ -168,31 +158,33 @@ int main(void) {
                             // notata la mia idiozia --> led settato come input 23.33
                             // controllo con led bit SPIROV : nessuna accensione 23.36
                             // cambio con SPIROV == 0: led acceso (valori di x, y ancora fottuti)
-        algorithm();
+        algorithm(TIMER1, 7);
         if(counter == mag_buff_dim){
             
             counter=0;
             head = 0;
             
-            x_avg = x_sum/mag_buff_dim;
-            y_avg = y_sum/mag_buff_dim;
-            z_avg = z_sum/mag_buff_dim;
+            x_avg = x_sum;//mag_buff_dim;
+            y_avg = y_sum;//mag_buff_dim;
+            z_avg = z_sum;//mag_buff_dim;
             
             // cambio definizione dei valori di media: 
             
             double yaw = atan2(y_avg,x_avg);
-            char toSend[uart_buff_dim_tx];
+            //char toSend[uart_buff_dim_tx];
             // nota: divisione intera restituisce intero OK, mag_buff_dim non ha un TIPO in senso stretto
             //          viene sostituito con '5' a run time
             sprintf(toSend,"$MAG,%.0f,%.0f,%.0f,$YAW,%.2f",x_avg, y_avg, z_avg, yaw*(180.0/3.14));
             dim = strlen(toSend);
+            if(dim > 0){
+                LATAbits.LATA0 = (!LATAbits.LATA0);
+            }
             // riduzione del carico di dati da inviare, effetto: nessun effetto apparente 23.04 (reinserisco il valore di yaw)
             //uart_send_string(toSend);
             x_sum=0;y_sum=0;z_sum=0;
-            
-            
             // send the first char to uart, kik start interrupt
-            IEC0bits.U1TXIE = 1; // attiva interrupt uart send
+            //IEC0bits.U1TXIE = 1; // attiva interrupt uart send
+            IFS0bits.U1TXIF = 1;
         }  
     }
    
@@ -208,3 +200,26 @@ int main(void) {
 
 // modifica: funizione atan2 richiede valori float come argomenti
 
+
+
+/*IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
+    LATAbits.LATA0 = (!LATAbits.LATA0);
+    
+    //uart_send_char(toSend[head]);
+    U1TXREG = toSend[head];
+    head++;
+    
+    if(head >= dim){
+        IEC0bits.U1TXIE = 0;
+    }
+    
+    
+    if(head < dim){
+        while(U1STAbits.UTXBF == 0){
+            uart_send_char(toSend[head]);
+            head++;
+        }
+    }else{
+        LATAbits.LATA0 = 1;
+    }*/
+    

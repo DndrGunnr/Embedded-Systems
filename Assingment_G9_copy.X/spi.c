@@ -52,7 +52,7 @@ void spi_magOn(){
     LATDbits.LATD6=0;
     uint8_t OpMode_reg=0x4C;
     trash=spi_write(OpMode_reg);
-    trash=spi_write(0x30); //correspond to 0b0011000 allows for simultaneous transition to active mode and setting of freq. tp 25 Hz
+    trash=spi_write(0x30); //correspond to 0b00110000 allows for simultaneous transition to active mode and setting of freq. tp 25 Hz
     LATDbits.LATD6=1;
     tmr_wait_ms(TIMER1,2);
 }
