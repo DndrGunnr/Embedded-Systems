@@ -5,9 +5,7 @@
  * Created on May 7, 2024, 4:37 PM
  */
 
-
 #include <p33EP512MU810.h>
-
 
 #include "xc.h"
 #include "uart.h"
@@ -19,7 +17,6 @@
 
 #define MAG_FRQ  4
 #define AVG_WIND 5
-#define PRINT_WD MAG_FRQ*AVG_WIND
 
 int16_t x_sum;
 int16_t y_sum;
@@ -40,7 +37,7 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     
     while(U1STAbits.UTXBF == 0){
         if(head >= dim){
-            LATAbits.LATA0 = 1;
+            //LATAbits.LATA0 = 1;
             break;
         }else{
             U1TXREG = toSend[head];
@@ -69,52 +66,58 @@ int main(void) {
     double y_avg;
     double z_avg;
     
-    tmr_setup_period(TIMER1, 7);
-    IEC0bits.T1IE = 0;
     tmr_setup_period(TIMER2, 10);
     IEC0bits.T2IE = 0;
     
     TRISGbits.TRISG9 = 0; // set led to output
     TRISAbits.TRISA0 = 0; // set led to output
+    
+    uint8_t temp = 0;
 
     while(1){
         algorithm(TIMER1, 7);
+        //LATGbits.LATG9 = (!LATGbits.LATG9);
         
         if(mag_poll == MAG_FRQ){
             x_sum = x_sum + spi_magRead(0x42,0x00F8,8);
             y_sum = y_sum + spi_magRead(0x44,0x00F8,8);
             z_sum = z_sum + spi_magRead(0x46,0x00FE,2);
             
+            LATAbits.LATA0 = (!LATAbits.LATA0);
+            
             mag_poll = 0;
             send_str++;
-        }
-        
-        if(send_str == MAG_FRQ) {
-            LATGbits.LATG9 = (!LATGbits.LATG9);
-            LATAbits.LATA0 = 0;
-            send_str = 0;
-            head = 0;
             
-            x_avg = x_sum/AVG_WIND;
-            y_avg = y_sum/AVG_WIND;
-            z_avg = z_sum/AVG_WIND;
+            if(send_str == AVG_WIND) {
             
-            double yaw = atan2(y_avg,x_avg);
-                    
-            sprintf(toSend,"$MAG,%.0f,%.0f,%.0f,$YAW,%.2f",x_avg, y_avg, z_avg, yaw*(180.0/3.14));
-            dim = strlen(toSend);
-            
-            x_sum=0;y_sum=0;z_sum=0;
-            
-            // send first char to start interrupt calls
-            U1TXREG = toSend[head];
-            head = head + 1;
+                send_str = 0;
+                head = 0;
+
+                x_avg = x_sum/AVG_WIND;
+                y_avg = y_sum/AVG_WIND;
+                z_avg = z_sum/AVG_WIND;
+
+                double yaw = atan2(y_avg,x_avg);
+
+                sprintf(toSend,"$MAG,%.0f,%.0f,%.0f,$YAW,%.2f",x_avg, y_avg, z_avg, yaw*(180.0/3.14));
+                dim = strlen(toSend);
+
+                x_sum=0;y_sum=0;z_sum=0;
+
+                // send first char to start interrupt calls
+                U1TXREG = toSend[head];
+                head = head + 1;
+            }
         }
         
         mag_poll++;
         
-        if(tmr_wait_period_busy(TIMER2)){
-            //break;
+        temp = tmr_wait_period_busy(TIMER2);
+        //IFS0bits.T2IF = 0;
+        if(temp){
+            LATAbits.LATA0 = 1;
+        }else{
+            //LATAbits.LATA0 = 0;
         }
     }
     
