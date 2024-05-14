@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=Assingment_G9_copy.X
+PROJECTNAME=Assingment_Group_9.X
 
 # Active Configuration
 DEFAULTCONF=default
