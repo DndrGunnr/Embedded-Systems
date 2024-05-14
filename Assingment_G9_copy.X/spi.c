@@ -73,9 +73,6 @@ int16_t spi_magRead(int16_t address, int16_t mask, int16_t divide){
     return MSB;
 }
 
-
-
-
 int spi_write(unsigned int addr){
     int16_t value;
     
