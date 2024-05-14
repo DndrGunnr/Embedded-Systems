@@ -48,5 +48,6 @@ float tmr_counter_calculation(int ms, int prescaler);
 int tmr_convert_prescaler(int prescaler_bits);
 
 int tmr_wait_period(int timer);
+int tmr_wait_period_busy(int timer);
 void tmr_wait_ms(int timer, int ms);
 void algorithm(int timer, int ms);
