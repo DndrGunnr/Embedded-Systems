@@ -1,7 +1,5 @@
-build/default/production/main.o: main.c uart.h timer.h spi.h
-
-uart.h:
-
-timer.h:
+build/default/production/main.o: main.c spi.h timer.h
 
 spi.h:
+
+timer.h:

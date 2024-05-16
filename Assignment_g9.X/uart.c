@@ -29,15 +29,15 @@ uint16_t new_char;
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1RXInterrupt(void) {
     IFS0bits.U1RXIF = 0; // reset the flag of the RX reg
-
-    new_char = 1;
-    uart_buff_add(RX);
 }
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     IFS0bits.U1TXIF = 0; // reset the flag of the TX reg
-
-
+    
+    while(U1STAbits.UTXBF == 0){
+        uart_send_char(toSend[head-1]);
+        head++;
+    }
 }
 
 // possible TX_interrupt_type
@@ -80,7 +80,7 @@ int uart_setup(int TX_interrupt_type) {
     // RX reg INTERR, fixed on interrupt on single char recived
     U1STAbits.URXISEL0 = 0; // RX interr set to trigger for every char recived
     U1STAbits.URXISEL1 = 0;
-    IEC0bits.U1RXIE = 1; // RX interr enable
+    IEC0bits.U1RXIE = 0; // RX interr enable
 
     return 1;
 }

@@ -35,8 +35,6 @@ void spi_setup(){
     SPI1CON1bits.PPRE= 2; // 4:1
     SPI1CON1bits.SPRE= 5; // 3:1 frequency=6MHz
     SPI1CON1bits.CKP = 1; //idle clock for some reason !!!
-    IFS0bits.SPI1IF = 0; //SPI interrupt flag clear 
-    IEC0bits.SPI1IE = 1; //SPI interrupt enable
     SPI1STATbits.SPIEN= 1; //SPI enable    
 }
 
@@ -44,7 +42,7 @@ void spi_magOn(){
      //magnetometer setting to sleep mode->change bit 0 of register 0x4B to "1"
     LATDbits.LATD6=0; //set pin value to low to begin communication 
     uint8_t power_control_reg= 0x4B;
-    uint8_t trash;
+    int8_t trash;
     trash=spi_write(power_control_reg);
     trash=spi_write(0x01);
     LATDbits.LATD6=1;
@@ -59,8 +57,10 @@ void spi_magOn(){
     tmr_wait_ms(TIMER1,2);
 }
 
-uint16_t spi_magRead(uint16_t address, uint16_t mask, uint16_t divide){
-    uint16_t LSB,MSB,trash;
+int16_t spi_magRead(int16_t address, int16_t mask, int16_t divide){
+    int16_t LSB=0;
+    int16_t MSB=0;
+    int16_t trash;
     CS = 0;
     trash = spi_write(address | read_mask);
     LSB = spi_write(0x00);
@@ -74,9 +74,15 @@ uint16_t spi_magRead(uint16_t address, uint16_t mask, uint16_t divide){
 }
 
 
+
+
 int spi_write(unsigned int addr){
+    int16_t value;
+    
     while(SPI1STATbits.SPITBF); //waiting buffer to free up
-    SPI1BUF=addr;
+    SPI1BUF = addr;
     while(SPI1STATbits.SPIRBF==0); //waiting buffer to receive something
-    return SPI1BUF;
+    value = SPI1BUF;
+    
+    return value;
 }

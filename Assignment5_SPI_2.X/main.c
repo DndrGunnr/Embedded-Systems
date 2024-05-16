@@ -18,7 +18,6 @@
 uint16_t LSB = 0;
 uint16_t MSB = 0;
 
-
 int main(void) {
     // disable analog pin
     ANSELA = ANSELB = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000;
