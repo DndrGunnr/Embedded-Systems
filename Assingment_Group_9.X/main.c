@@ -89,6 +89,7 @@ int main(void) {
 
     while(1){
         algorithm(TIMER1, 7);
+        
         if(counter == MAG_BUFF){ // five IMU polling effectuated
             // reset of index and counter 
             counter=0;
