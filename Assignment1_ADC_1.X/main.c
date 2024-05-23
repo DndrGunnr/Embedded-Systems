@@ -8,6 +8,32 @@
 
 #include "xc.h"
 #include "uart.h"
+#include "timer.h"
+#include "stdio.h"
+#include "string.h"
+
+#define LV_CONV 0.00322
+#define R 3
+
+int16_t gl_index = 0;
+int16_t gl_sampl = 1;
+int16_t gl_toSendLen = 0;
+char gl_toSend[4];
+    
+
+void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
+    IFS0bits.U1TXIF = 0; 
+    
+    while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
+        if(gl_index >= gl_toSendLen){ // if the index is greater or equal to the current message dimension exit from the loop
+            gl_sampl = 1;
+            break;
+        }else{
+            U1TXREG = gl_toSend[gl_index]; // insert the first available char from the string to the TX trasmint buffer 
+            gl_index = gl_index + 1; // increase the string index
+        }
+    }
+}
 
 int main(void) {
     ANSELA = ANSELB = ANSELC = ANSELD = ANSELE = ANSELG = 0X0000;// analog pin disableing
@@ -55,13 +81,41 @@ int main(void) {
     TRISGbits.TRISG9 = 0;
     TRISAbits.TRISA0 = 0;
     
+    // uart set up
+    uart_setup(1, 0, 0, 0);
+    
     // BEGIN SAMPLING --> set sampling bit to 1
     
-    
-            
+    int16_t ADCValue;
+    double TENValue;
+    double BATValue;
+
     
     while(1){
-        LATGbits.LATG9 = 1;
+        if(gl_sampl == 1){
+            gl_index = 0;
+            gl_sampl = 0;
+            
+            AD1CON1bits.SAMP = 1; // Start sampling
+            tmr_wait_ms(TIMER1, 1);
+            AD1CON1bits.SAMP = 0; // Start the conversion
+            while (!AD1CON1bits.DONE); // Wait for the conversion to complete
+            ADCValue = ADC1BUF0;
+            
+            // conversione e invio
+            //TENValue = LV_CONV * ADCValue;
+            //BATValue = R * TENValue;
+            
+            sprintf(gl_toSend, "%d", ADCValue);
+            gl_toSendLen = strlen(gl_toSend);
+            if(gl_toSendLen == 3){
+                LATGbits.LATG9 = (!LATGbits.LATG9);
+            }
+            
+            IFS0bits.U1TXIF = 1;
+        }
+        
+        tmr_wait_ms(TIMER2, 400);
     }
             
     return 0;
