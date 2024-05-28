@@ -185,11 +185,11 @@ Default Scalar Model: Small
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200              0x2720          0x3ab0  (15024)
-.const                      0x2920                 0x8             0xc  (12)
-.text                       0x2928               0x6ec           0xa62  (2658)
-.dinit                      0x3014                0x6a            0x9f  (159)
+.const                      0x2920                 0x6             0x9  (9)
+.text                       0x2926               0x6ec           0xa62  (2658)
+.dinit                      0x3012                0x6a            0x9f  (159)
 
-                 Total "program" memory used (bytes):         0x45bd  (17853) 3%
+                 Total "program" memory used (bytes):         0x45ba  (17850) 3%
 
 
 Auxflash Memory  [Origin = 0x7fc000, Length = 0x3ffa]
@@ -333,16 +333,16 @@ External Symbols in Program Memory (by address):
                   0x002800                  __dunpack2exit
                   0x00280a                  __dPropagateNaN
                   0x002828                  _floorl
-                  0x002928                  _tmr_compute_prescaler
-                  0x0029a6                  _tmr_counter_calculation
-                  0x0029dc                  _tmr_convert_prescaler
-                  0x002a1c                  _tmr_setup_period
-                  0x002bc8                  _tmr_wait_period
-                  0x002c40                  _tmr_wait_period_busy
-                  0x002cf4                  _tmr_wait_ms
-                  0x002e44                  _algorithm
-                  0x002e54                  _main
-                  0x002f8e                  _uart_setup
+                  0x002926                  _tmr_compute_prescaler
+                  0x0029a4                  _tmr_counter_calculation
+                  0x0029da                  _tmr_convert_prescaler
+                  0x002a1a                  _tmr_setup_period
+                  0x002bc6                  _tmr_wait_period
+                  0x002c3e                  _tmr_wait_period_busy
+                  0x002cf2                  _tmr_wait_ms
+                  0x002e42                  _algorithm
+                  0x002e52                  _main
+                  0x002f8c                  _uart_setup
 
 External Symbols in Program Memory (by name):
 
@@ -422,11 +422,11 @@ External Symbols in Program Memory (by name):
                   0x000948                  __typef
                   0x0008ea                  __unpackdnrmf
                   0x000a34                  __unpackf
-                  0x002e44                  _algorithm
+                  0x002e42                  _algorithm
                   0x001f14                  _atoi
                   0x0014d8                  _fabsf
                   0x002828                  _floorl
-                  0x002e54                  _main
+                  0x002e52                  _main
                   0x001f60                  _memcpy
                   0x001f6e                  _memset
                   0x000baa                  _powf
@@ -434,15 +434,15 @@ External Symbols in Program Memory (by name):
                   0x0013c4                  _sqrtf
                   0x002036                  _strcpy
                   0x0014f2                  _strlen
-                  0x002928                  _tmr_compute_prescaler
-                  0x0029dc                  _tmr_convert_prescaler
-                  0x0029a6                  _tmr_counter_calculation
-                  0x002a1c                  _tmr_setup_period
-                  0x002cf4                  _tmr_wait_ms
-                  0x002bc8                  _tmr_wait_period
-                  0x002c40                  _tmr_wait_period_busy
+                  0x002926                  _tmr_compute_prescaler
+                  0x0029da                  _tmr_convert_prescaler
+                  0x0029a4                  _tmr_counter_calculation
+                  0x002a1a                  _tmr_setup_period
+                  0x002cf2                  _tmr_wait_ms
+                  0x002bc6                  _tmr_wait_period
+                  0x002c3e                  _tmr_wait_period_busy
                   0x002044                  _tolower
-                  0x002f8e                  _uart_setup
+                  0x002f8c                  _uart_setup
 
 Memory Configuration
 
@@ -3848,23 +3848,23 @@ __c30_signature
  .ivt._U1TXInterrupt
                   0x00002c          0x2 build/default/production/main.o
 
-.const              0xa920          0x8 load address 0x002920  
- .const             0xa920          0x8 build/default/production/main.o
+.const              0xa920          0x6 load address 0x002920  
+ .const             0xa920          0x6 build/default/production/main.o
 
-.text             0x002928        0x6ec
- .text            0x002928        0x52c build/default/production/timer.o
-                  0x002928                  _tmr_compute_prescaler
-                  0x0029a6                  _tmr_counter_calculation
-                  0x0029dc                  _tmr_convert_prescaler
-                  0x002a1c                  _tmr_setup_period
-                  0x002bc8                  _tmr_wait_period
-                  0x002c40                  _tmr_wait_period_busy
-                  0x002cf4                  _tmr_wait_ms
-                  0x002e44                  _algorithm
- .text            0x002e54        0x13a build/default/production/main.o
-                  0x002e54                  _main
- .text            0x002f8e         0x86 build/default/production/uart.o
-                  0x002f8e                  _uart_setup
+.text             0x002926        0x6ec
+ .text            0x002926        0x52c build/default/production/timer.o
+                  0x002926                  _tmr_compute_prescaler
+                  0x0029a4                  _tmr_counter_calculation
+                  0x0029da                  _tmr_convert_prescaler
+                  0x002a1a                  _tmr_setup_period
+                  0x002bc6                  _tmr_wait_period
+                  0x002c3e                  _tmr_wait_period_busy
+                  0x002cf2                  _tmr_wait_ms
+                  0x002e42                  _algorithm
+ .text            0x002e52        0x13a build/default/production/main.o
+                  0x002e52                  _main
+ .text            0x002f8c         0x86 build/default/production/uart.o
+                  0x002f8c                  _uart_setup
 
-.dinit            0x003014         0x6a
- .dinit           0x003014         0x6a data_init
+.dinit            0x003012         0x6a
+ .dinit           0x003012         0x6a data_init

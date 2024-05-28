@@ -18,7 +18,7 @@ int16_t gl_sampl = 1;
 int16_t gl_toSendLen = 0;
 char gl_toSend[4];
 float lv_conv = 1024.0;
-float volt = 1.7;
+float volt = 3.3;
     
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
@@ -49,15 +49,15 @@ int main(void) {
     // set the speed of the conversion
     // selects how long is one Tad [1 Tcy - 64 Tcy]
     
-    // exe 1 --> manual conversion / manual sampling
+    // exe 3 --> automatic conversion / automatic sampling
     // sampling mode
-    AD1CON1bits.ASAM = 0;
-    
-    // conversion mode (automatic)
-    AD1CON1bits.SSRC = 7;
+    AD1CON1bits.ASAM = 1;  
     
     // define conversion time (16 Tad)
     AD1CON3bits.SAMC = 16; // la conversione parte dopo 16*Tad ms
+    
+    // conversion mode (automatic)
+    AD1CON1bits.SSRC = 7;
     
     // channel number selection
     AD1CON2bits.CHPS = 0; // single channel mode (reading only from CH0)
@@ -90,41 +90,10 @@ int main(void) {
     // BEGIN SAMPLING --> set sampling bit to 1
     
     int16_t ADCValue;
-    double QUANValue;
-    double TENValue;
-    double METERValue;
 
     
     while(1){
-        if(gl_sampl == 1){
-            gl_index = 0;
-            gl_sampl = 0;
-            
-            AD1CON1bits.SAMP = 1; // Start sampling
-            // AD1CON1bits.SAMP = 0; // Automatic conversion
-            while (!AD1CON1bits.DONE); // Wait for the conversion to complete
-            AD1CON1bits.DONE = 0;       // clear done status
-            ADCValue = ADC1BUF0;
-            
-            // quantizzazione
-            QUANValue = ADCValue/lv_conv;
-            
-            // conversione in volt
-            TENValue = QUANValue*volt;
-            
-            // conversione in metri
-            METERValue = 2.34 - 4.74*TENValue + 4.06*pow(TENValue, 2) - 1.60*pow(TENValue, 3) + 0.24*pow(TENValue, 4);
-            
-            sprintf(gl_toSend, "%.5f m", TENValue);
-            gl_toSendLen = strlen(gl_toSend);
-            if(gl_toSendLen > 0){
-                LATGbits.LATG9 = (!LATGbits.LATG9);
-            }
-            
-            IFS0bits.U1TXIF = 1;
-        }
-        
-        tmr_wait_ms(TIMER2, 400);
+           
     }
             
     return 0;
