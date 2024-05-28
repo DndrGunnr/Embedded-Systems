@@ -11,14 +11,14 @@
 #include "timer.h"
 #include "stdio.h"
 #include "string.h"
+#include "math.h"
 
-
-float lv_conv = 1024.0;
-float volt = 3.3;
 int16_t gl_index = 0;
 int16_t gl_sampl = 1;
 int16_t gl_toSendLen = 0;
 char gl_toSend[4];
+float lv_conv = 1024.0;
+float volt = 1.7;
     
 
 void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
@@ -53,16 +53,19 @@ int main(void) {
     // sampling mode
     AD1CON1bits.ASAM = 0;
     
-    // conversion mode
-    AD1CON1bits.SSRC = 0;
+    // conversion mode (automatic)
+    AD1CON1bits.SSRC = 7;
+    
+    // define conversion time (16 Tad)
+    AD1CON3bits.SAMC = 16; // la conversione parte dopo 16*Tad ms
     
     // channel number selection
     AD1CON2bits.CHPS = 0; // single channel mode (reading only from CH0)
         // pag 33 del data sheet ADC
     
     // choose positive input to the channel
-    AD1CHS0bits.CH0SA = 11; // analog AN11 (numerazione progressiva)
-                            // controllo batteria
+    AD1CHS0bits.CH0SA = 5; // analog AN5 (numerazione progressiva)
+                            // controllo sensore distanza
         // pag 14 del data sheet ADC
     // choose negative input to the channel
     AD1CHS123bits.CH123SA = 1; // stiamo settando gli input positivi di CH1,2,3
@@ -70,7 +73,7 @@ int main(void) {
         // pag 13 del data sheet ADC
     
     // analog pin mode selection
-    ANSELBbits.ANSB11 = 1;
+    ANSELBbits.ANSB5 = 1;
         // pag 115 data sheet completo
     // SIMSAM e SMPI non vengono settati dato utilizzo single channel mode
     
@@ -87,9 +90,9 @@ int main(void) {
     // BEGIN SAMPLING --> set sampling bit to 1
     
     int16_t ADCValue;
+    double QUANValue;
     double TENValue;
-    double BATValue;
-    double PERValue;
+    double METERValue;
 
     
     while(1){
@@ -98,19 +101,21 @@ int main(void) {
             gl_sampl = 0;
             
             AD1CON1bits.SAMP = 1; // Start sampling
-            tmr_wait_ms(TIMER1, 1);
-            AD1CON1bits.SAMP = 0; // Start the conversion
+            // AD1CON1bits.SAMP = 0; // Automatic conversion
             while (!AD1CON1bits.DONE); // Wait for the conversion to complete
+            AD1CON1bits.DONE = 0;       // clear done status
             ADCValue = ADC1BUF0;
             
-            // conversione e invio
-            TENValue = ADCValue/lv_conv;
-            BATValue = volt * TENValue;
+            // quantizzazione
+            QUANValue = ADCValue/lv_conv;
             
-            // conversione percentuale
-            PERValue = (100*BATValue)/volt;
+            // conversione in volt
+            TENValue = QUANValue*volt;
             
-            sprintf(gl_toSend, "%.2f %", PERValue);
+            // conversione in metri
+            METERValue = 2.34 - 4.74*TENValue + 4.06*pow(TENValue, 2) - 1.60*pow(TENValue, 3) + 0.24*pow(TENValue, 4);
+            
+            sprintf(gl_toSend, "%.5f m", TENValue);
             gl_toSendLen = strlen(gl_toSend);
             if(gl_toSendLen > 0){
                 LATGbits.LATG9 = (!LATGbits.LATG9);

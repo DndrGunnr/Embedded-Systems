@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/production/Assignment1_ADC_1.X.production.elf">
+  <executable name="dist/default/production/Assignment6_ADC_2.X.production.elf">
     <memory name="data">
       <units>bytes</units>
       <length>53248</length>
-      <used>68</used>
-      <free>53180</free>
+      <used>92</used>
+      <free>53156</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>524544</length>
-      <used>13449</used>
-      <free>511095</free>
+      <used>17853</used>
+      <free>506691</free>
     </memory>
   </executable>
 </project>
