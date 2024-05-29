@@ -42,6 +42,7 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
 void __attribute__((__interrupt__, _auto_psv)) _T1Interrupt(void){
     send_data = 1;
     IFS0bits.T1IF = 0; // set timer flag to 0 --> to read next interrupt
+    TMR1 = 0;           // reset timer
 }
 
 void ADC_read(){
@@ -50,10 +51,10 @@ void ADC_read(){
     
     switch (int_counter){
         case 3:
-            ADCIFR = ADC1BUF5;
+            ADCIFR = ADC1BUF1;
             break;
         case 6:
-            ADCBAT = ADC1BUFB;
+            ADCBAT = ADC1BUF1;
             break;
         case 8:
             int_counter = 0;
@@ -156,7 +157,7 @@ int main(void) {
             // conversione cm
             CM_ifr = (2.34 - 4.74 * TN_ifr + 4.06 * pow(TN_ifr, 2) - 1.60 * pow(TN_ifr, 3) + 0.24 * pow(TN_ifr, 4))*100;
 
-            sprintf(gl_toSend, "$SENS,%.2f,%d", CM_ifr, ADCBAT);
+            sprintf(gl_toSend, "%d", ADCBAT);
             gl_toSendLen = strlen(gl_toSend);
             if (gl_toSendLen > 0) {
                 LATGbits.LATG9 = (!LATGbits.LATG9);
