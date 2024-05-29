@@ -108,7 +108,7 @@ int main(void) {
             TENValue = ADCValue/lv_conv;
             BATValue = (volt * TENValue)*partitore;
             
-            sprintf(gl_toSend, "%.2f V", BATValue);
+            sprintf(gl_toSend, "%.2f", BATValue);
             gl_toSendLen = strlen(gl_toSend);
             if(gl_toSendLen > 0){
                 LATGbits.LATG9 = (!LATGbits.LATG9);

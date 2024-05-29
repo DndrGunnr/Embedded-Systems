@@ -19,6 +19,7 @@ int16_t int_counter = 0;
 char gl_toSend[4];
 float lv_conv = 1024.0;
 float volt = 3.3;
+int16_t partitore = 3;
 int16_t ADCBAT;
 int16_t ADCIFR;
 int16_t send_data = 0;
@@ -144,17 +145,18 @@ int main(void) {
         
         if(send_data){
             // quantizzazione
+            LATAbits.LATA0 = 1;
             QV_bat = ADCBAT / lv_conv;
             QV_ifr = ADCIFR / lv_conv;
            
             // conversione in volt
-            TN_bat = QV_bat * volt;
+            TN_bat = (QV_bat * volt)*partitore;
             TN_ifr = QV_ifr * volt;
             
             // conversione cm
             CM_ifr = (2.34 - 4.74 * TN_ifr + 4.06 * pow(TN_ifr, 2) - 1.60 * pow(TN_ifr, 3) + 0.24 * pow(TN_ifr, 4))*100;
 
-            sprintf(gl_toSend, "$SENS,%.2f,%.2f", CM_ifr, TN_bat);
+            sprintf(gl_toSend, "$SENS,%.2f,%d", CM_ifr, ADCBAT);
             gl_toSendLen = strlen(gl_toSend);
             if (gl_toSendLen > 0) {
                 LATGbits.LATG9 = (!LATGbits.LATG9);
