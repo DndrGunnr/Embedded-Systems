@@ -15,6 +15,7 @@
 
 float lv_conv = 1024.0;
 float volt = 3.3;
+int16_t partitore = 3;
 int16_t gl_index = 0;
 int16_t gl_sampl = 1;
 int16_t gl_toSendLen = 0;
@@ -105,12 +106,9 @@ int main(void) {
             
             // conversione e invio
             TENValue = ADCValue/lv_conv;
-            BATValue = volt * TENValue;
+            BATValue = (volt * TENValue)*partitore;
             
-            // conversione percentuale
-            PERValue = (100*BATValue)/volt;
-            
-            sprintf(gl_toSend, "%d", ADCValue);
+            sprintf(gl_toSend, "%.2f V", BATValue);
             gl_toSendLen = strlen(gl_toSend);
             if(gl_toSendLen > 0){
                 LATGbits.LATG9 = (!LATGbits.LATG9);
