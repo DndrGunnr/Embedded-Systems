@@ -110,7 +110,7 @@ int main(void) {
             // conversione percentuale
             PERValue = (100*BATValue)/volt;
             
-            sprintf(gl_toSend, "%.2f %", PERValue);
+            sprintf(gl_toSend, "%d", ADCValue);
             gl_toSendLen = strlen(gl_toSend);
             if(gl_toSendLen > 0){
                 LATGbits.LATG9 = (!LATGbits.LATG9);
