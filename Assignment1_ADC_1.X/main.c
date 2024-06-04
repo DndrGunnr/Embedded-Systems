@@ -17,7 +17,7 @@ float lv_conv = 1024.0;
 float volt = 3.3;
 int16_t partitore = 3;
 int16_t gl_index = 0;
-int16_t gl_sampl = 1;
+int16_t gl_sampl = 0;
 int16_t gl_toSendLen = 0;
 char gl_toSend[4];
     
@@ -27,13 +27,19 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     
     while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
         if(gl_index >= gl_toSendLen){ // if the index is greater or equal to the current message dimension exit from the loop
-            gl_sampl = 1;
             break;
         }else{
             U1TXREG = gl_toSend[gl_index]; // insert the first available char from the string to the TX trasmint buffer 
             gl_index = gl_index + 1; // increase the string index
         }
     }
+}
+
+void __attribute__((__interrupt__, no_auto_psv__))_T1Interrupt(void){
+    IFS0bits.T1IF = 0; // flag down
+    TMR1 = 0; // reset timer
+    
+    gl_sampl = 1;
 }
 
 int main(void) {
@@ -91,6 +97,9 @@ int main(void) {
     double TENValue;
     double BATValue;
     double PERValue;
+    
+    tmr_setup_period(TIMER1, 200);
+    IEC0bits.T1IE = 1; // activate the timer interrupt
 
     
     while(1){
@@ -116,8 +125,6 @@ int main(void) {
             
             IFS0bits.U1TXIF = 1;
         }
-        
-        tmr_wait_ms(TIMER2, 400);
     }
             
     return 0;
