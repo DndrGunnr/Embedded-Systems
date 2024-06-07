@@ -12,11 +12,12 @@
 #include "stdio.h"
 #include "string.h"
 
-#define LV_CONV 0.00322
-#define R 3
 
+float lv_conv = 1024.0;
+float volt = 3.3;
+int16_t partitore = 3;
 int16_t gl_index = 0;
-int16_t gl_sampl = 1;
+int16_t gl_sampl = 0;
 int16_t gl_toSendLen = 0;
 char gl_toSend[4];
     
@@ -26,13 +27,19 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     
     while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
         if(gl_index >= gl_toSendLen){ // if the index is greater or equal to the current message dimension exit from the loop
-            gl_sampl = 1;
             break;
         }else{
             U1TXREG = gl_toSend[gl_index]; // insert the first available char from the string to the TX trasmint buffer 
             gl_index = gl_index + 1; // increase the string index
         }
     }
+}
+
+void __attribute__((__interrupt__, no_auto_psv__))_T1Interrupt(void){
+    IFS0bits.T1IF = 0; // flag down
+    TMR1 = 0; // reset timer
+    
+    gl_sampl = 1;
 }
 
 int main(void) {
@@ -89,6 +96,9 @@ int main(void) {
     int16_t ADCValue;
     double TENValue;
     double BATValue;
+    
+    tmr_setup_period(TIMER1, 400);
+    IEC0bits.T1IE = 1; // activate the timer interrupt
 
     
     while(1){
@@ -97,25 +107,23 @@ int main(void) {
             gl_sampl = 0;
             
             AD1CON1bits.SAMP = 1; // Start sampling
-            tmr_wait_ms(TIMER1, 1);
+            tmr_wait_ms(TIMER2, 1);
             AD1CON1bits.SAMP = 0; // Start the conversion
             while (!AD1CON1bits.DONE); // Wait for the conversion to complete
             ADCValue = ADC1BUF0;
             
             // conversione e invio
-            //TENValue = LV_CONV * ADCValue;
-            //BATValue = R * TENValue;
+            TENValue = ADCValue/lv_conv;
+            BATValue = (volt * TENValue)*partitore;
             
-            sprintf(gl_toSend, "%d", ADCValue);
+            sprintf(gl_toSend, "%.2f", BATValue);
             gl_toSendLen = strlen(gl_toSend);
-            if(gl_toSendLen == 3){
+            if(gl_toSendLen > 0){
                 LATGbits.LATG9 = (!LATGbits.LATG9);
             }
             
             IFS0bits.U1TXIF = 1;
         }
-        
-        tmr_wait_ms(TIMER2, 400);
     }
             
     return 0;
