@@ -8,10 +8,10 @@
 
 #include "xc.h"
 #include "timer.h"
-
+#include "pwm.h"
 int is_pwm_on=0;
 
-void __attribute__((__interrupt__, no_auto_psv__)) _INT1Interrupt(){
+void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
     
     IFS1bits.INT1IF = 0;            // Reset button flag
     IEC1bits.INT1IE = 0;            // Disable button
@@ -19,28 +19,16 @@ void __attribute__((__interrupt__, no_auto_psv__)) _INT1Interrupt(){
     tmr_setup_period(TIMER1, 30);
 }
 
-void __attribute__((__interrupt__, no_auto_psv__)) _T1Interrupt(){
+void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
     
-    IFS0bits.T1IF = 0;      // Reset timer2 flag
+    IFS0bits.T1IF = 0;     
     T1CONbits.TON = 0;      // Stop the timer
     IFS1bits.INT1IF = 0;    // Reset button flag
     IEC1bits.INT1IE = 1;    // Enable button
     
     if (PORTEbits.RE8 == 1){   
         LATAbits.LATA0=1;
-        if(is_pwm_on){
-            RPOR1bits.RP66R=0; //unmapping to stop the veichle
-            RPOR2bits.RP68R=0;
-            LATDbits.LATD2=0;
-            LATDbits.LATD4=0;
-            is_pwm_on=0;
-        }
-        else{
-                //remapping of RD2 & RD4 to output compare
-                RPOR1bits.RP66R=0b010000; //RP65 remapped to OC1
-                RPOR2bits.RP68R=0b010000;// RP68 remapped to OC1
-                is_pwm_on=1;
-        }
+        pwm_forward(10,2000);
         
             
     }
@@ -49,12 +37,23 @@ void __attribute__((__interrupt__, no_auto_psv__)) _T1Interrupt(){
 }
 
 
+void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(){
+    IFS0bits.T2IF=0;
+    T2CONbits.TON=0;
+    //unmapping output compare pins to stop motion
+    RPOR0bits.RP65R=0;
+    RPOR1bits.RP66R=0; 
+    RPOR1bits.RP67R=0;
+    RPOR2bits.RP68R=0;
+}
+
+
 int main(void) {
     ANSELA=ANSELB=ANSELC=ANSELD=ANSELE=ANSELG=0x0000;
     TRISAbits.TRISA0= 0; //LD1 debug led
     TRISEbits.TRISE8 = 1; //Button 1 as input
     RPINR0bits.INT1R=0x58; //interrupt1 remapped to interrupt
-    IFS0bits.T2IF = 0;
+    IFS0bits.T1IF = 0;
     IFS1bits.INT1IF = 0;
     IEC1bits.INT1IE=1;
     //add PWM setup here
@@ -70,8 +69,8 @@ int main(void) {
     TRISDbits.TRISD3=0;
     TRISDbits.TRISD4=0;
     //remapping RD1 & RD3 to 0 (forward motion)
-    LATDbits.LATD1=0;
-    LATDbits.LATD3=0;
+    LATDbits.LATD2=0;
+    LATDbits.LATD4=0;
     
     
     while(1);

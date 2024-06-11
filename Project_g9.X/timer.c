@@ -122,36 +122,45 @@ int tmr_wait_period(int timer){
     switch(timer){
         case 1:
             ret_val = IFS0bits.T1IF;     // save flag value before reset
-            IFS0bits.T1IF = 0;           // set flag bit to 0 --> flag goes to one when timer expire
-            TMR1 = 0;                    // reset the timer and start watching the flag
-
+            if(ret_val){
+                IFS0bits.T1IF = 0;           // set flag bit to 0 --> flag goes to one when timer expire
+                TMR1 = 0;                    // reset the timer and start watching the flag
+            }    
             break;
             
         case 2:
             ret_val = IFS0bits.T2IF;    // save flag value before reset
-            IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
-            TMR2 = 0;                   // reset the timer and start watching the flag
+            if(ret_val){
+                IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+                TMR2 = 0;                   // reset the timer and start watching the flag
+            }
 
             break;
             
         case 3:
             ret_val = IFS0bits.T3IF;    // save flag value before reset
-            IFS0bits.T3IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
-            TMR3 = 0;                   // reset the timer and start watching the flag
+            if(ret_val){
+                IFS0bits.T3IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+                TMR3 = 0;                   // reset the timer and start watching the flag
+            }
 
             break;
             
         case 4:
             ret_val = IFS1bits.T4IF;    // save flag value before reset
-            IFS1bits.T4IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
-            TMR4 = 0;                   // reset the timer and start watching the flag
+            if(ret_val){
+                IFS1bits.T4IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+                TMR4 = 0;                   // reset the timer and start watching the flag
+            }
 
             break;
             
         case 5:
             ret_val = IFS1bits.T5IF;    // save flag value before reset
-            IFS1bits.T5IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
-            TMR5 = 0;                   // reset the timer and start watching the flag
+            if(ret_val){
+                IFS1bits.T5IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+                TMR5 = 0;                   // reset the timer and start watching the flag
+            }
 
             break;
     }
