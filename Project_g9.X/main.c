@@ -8,6 +8,9 @@
 
 #include "xc.h"
 #include "timer.h"
+#include "uart.h"
+
+typedef 
 
 int is_waiting=1; //wait status
 int led_blink_counter=0; //in order to use the same timer for the main loop and the led blinking
@@ -58,10 +61,14 @@ void setup(){
     TRISBbits.TRISB8=0;
     tmr_setup_period(TIMER3, 1);
     IEC0bits.T3IE=1;
+    //uart setup
+    //int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type
+    uart_setup(1,0,1,0);
 }
 
 int main(void) {
     setup();
+   
     
     while(1){
         
