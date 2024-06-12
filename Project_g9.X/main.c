@@ -112,12 +112,32 @@ int main(void) {
 	pstate.index_type = 0; 
 	pstate.index_payload = 0;
     
+    // variables for command conversion
+    char *faux_pl;
+    int16_t index_pl = 0;
+    
+    // command
+    move command_1;
+    
     while(1){
         scheduler(schedInfo,MAX_TASKS);
         if(new_command){
             if(!payload_empty()){
-                LATGbits.LATG9 = 1;
+                faux_pl = get_payload(); // retrive the poiter to the payload buffer
+                
+                command_1.x = extract_integer(faux_pl); // send the extract integer with the payload buffer
+                index_pl = next_value(faux_pl, (get_payload_head())); // get the index to the start of the next integer
+                
+                move_payload_head(index_pl); // move payload head index of index_pl places
+                
+                command_1.t = extract_integer((faux_pl+index_pl)); // extract the second integer
+                
+                index_pl = next_value((faux_pl+index_pl), (get_payload_head()));
+                move_payload_head(index_pl - get_payload_head() - 1); // move payload head to the last char int the buffer
             }
+        }
+        if(command_1.t == 33){
+            LATGbits.LATG9 = 1;
         }
             
         

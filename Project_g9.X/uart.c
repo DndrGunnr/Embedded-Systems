@@ -82,4 +82,20 @@ int16_t payload_empty(){
     }
     return temp;
 }
+
+void move_payload_head(int16_t bytes){
+    head_pl = head_pl + bytes;
+    if(head_pl > RX_DIM){
+        head_pl = 0;
+    }
+}
+
+char *get_payload(){
+    return payload_buffer;
+}
+
+int16_t get_payload_head(){
+    return head_pl;
+}
+
     
