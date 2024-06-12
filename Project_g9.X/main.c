@@ -9,11 +9,25 @@
 #include "xc.h"
 #include "timer.h"
 #include "uart.h"
+#include "scheduler.h"
 
-typedef 
+#define MAX_TASKS 1
+
+typedef struct{
+    int x;
+    int t;
+}move;
 
 int is_waiting=1; //wait status
-int led_blink_counter=0; //in order to use the same timer for the main loop and the led blinking
+
+void task_blink_led(void* param){
+    int* state = (int*) param;
+    LATAbits.LATA0 = (!LATAbits.LATA0);
+    if (*state) {
+        LATBbits.LATB8 = (!LATBbits.LATB8);
+        LATFbits.LATF1 = (!LATFbits.LATF1);
+    }
+}
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
     
@@ -34,7 +48,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
         is_waiting=(!is_waiting);
 }
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(){
+/*void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(){
     TMR3=0;
     IFS0bits.T3IF=0;
     led_blink_counter++;
@@ -46,7 +60,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(){
             LATFbits.LATF1=(!LATFbits.LATF1);
         }   
     }
-}
+}*/
 
 void setup(){
     ANSELA=ANSELB=ANSELC=ANSELD=ANSELE=ANSELG=0x0000;
@@ -56,22 +70,33 @@ void setup(){
     INTCON2bits.GIE=1;
     IFS1bits.INT1IF = 0;
     IEC1bits.INT1IE=1;
+    
+    
     //turning lights pins
     TRISFbits.TRISF1=0;
     TRISBbits.TRISB8=0;
+    //main loop frequency 1Khz
     tmr_setup_period(TIMER3, 1);
-    IEC0bits.T3IE=1;
+    IEC0bits.T3IE=0;
     //uart setup
     //int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type
-    uart_setup(1,0,1,0);
+    //uart_setup(1,0,1,0);
 }
 
 int main(void) {
     setup();
+    //scheduler setup
+    heartbeat schedInfo[MAX_TASKS];
+    schedInfo[0].N=1000;
+    schedInfo[0].n=0;
+    schedInfo[0].f=&task_blink_led;
+    schedInfo[0].params= (void*)(&is_waiting);
+    schedInfo[0].enable=1;
    
     
     while(1){
-        
+        scheduler(schedInfo,MAX_TASKS);
+        tmr_wait_period_busy(TIMER3);
     }
     
     
