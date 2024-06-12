@@ -10,8 +10,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "scheduler.h"
-
-#define MAX_TASKS 1
+#include "parser.h"
 
 typedef struct{
     int x;
@@ -20,14 +19,10 @@ typedef struct{
 
 int is_waiting=1; //wait status
 
-void task_blink_led(void* param){
-    int* state = (int*) param;
-    LATAbits.LATA0 = (!LATAbits.LATA0);
-    if (*state) {
-        LATBbits.LATB8 = (!LATBbits.LATB8);
-        LATFbits.LATF1 = (!LATFbits.LATF1);
-    }
-}
+parser_state pstate;
+
+void task_blink_led(void* param);
+void scheduler_setup(heartbeat schedInfo[]);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
     
@@ -46,6 +41,20 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
     
     if (PORTEbits.RE8==1) //value is 1 when button is not pressed
         is_waiting=(!is_waiting);
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
+    IFS0bits.U1RXIF = 0;
+    char new_char;
+    // after a char is recived, start the parsing
+    new_char = U1RXREG;
+    if(parse_byte(&pstate, new_char) == NEW_MESSAGE){
+        LATGbits.LATG9 = 1;
+    }
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _U1TXInterrupt(){
+    IFS0bits.U1TXIF = 0;
 }
 
 /*void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(){
@@ -80,19 +89,21 @@ void setup(){
     IEC0bits.T3IE=0;
     //uart setup
     //int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type
-    //uart_setup(1,0,1,0);
+    uart_setup(1,0,1,0);
+    
+    TRISGbits.TRISG9 = 0;
 }
 
 int main(void) {
     setup();
     //scheduler setup
     heartbeat schedInfo[MAX_TASKS];
-    schedInfo[0].N=1000;
-    schedInfo[0].n=0;
-    schedInfo[0].f=&task_blink_led;
-    schedInfo[0].params= (void*)(&is_waiting);
-    schedInfo[0].enable=1;
-   
+    scheduler_setup(schedInfo);
+    
+    //parser setup
+	pstate.state = STATE_DOLLAR;
+	pstate.index_type = 0; 
+	pstate.index_payload = 0;
     
     while(1){
         scheduler(schedInfo,MAX_TASKS);
@@ -100,5 +111,40 @@ int main(void) {
     }
     
     
+    
+    /*schedInfo[0].N=1000;
+    schedInfo[0].n=0;
+    schedInfo[0].f=&task_blink_led;
+    schedInfo[0].params= (void*)(&is_waiting);
+    schedInfo[0].enable=1
+    */
     return 0;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------- //
+// -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
+void task_blink_led(void* param){
+    int* state = (int*) param;
+    LATAbits.LATA0 = (!LATAbits.LATA0);
+    if (*state) {
+        LATBbits.LATB8 = (!LATBbits.LATB8);
+        LATFbits.LATF1 = (!LATFbits.LATF1);
+    }
+}
+
+void scheduler_setup(heartbeat schedInfo[]){
+    // led blink task
+    schedInfo[0].N=1000;
+    schedInfo[0].n=0;
+    schedInfo[0].f=&task_blink_led;
+    schedInfo[0].params= (void*)(&is_waiting);
+    schedInfo[0].enable=1;
+    
+    // new command conversion and saving
+    
+    // battery sensing and logging 
+    
+    // IR logging
+}
+// -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------------------------------------------- //

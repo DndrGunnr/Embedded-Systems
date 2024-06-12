@@ -7,7 +7,6 @@
 
 
 #include "xc.h"
-
 #include "parser.h"
 
 int parse_byte(parser_state* ps, char byte) {
