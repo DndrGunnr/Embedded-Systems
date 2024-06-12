@@ -12,6 +12,10 @@
 #include "string.h"
 #include "stdlib.h"
 
+char payload_buffer[RX_DIM];
+int16_t head_pl = 0;
+int16_t tail_pl = 0;
+
 
 int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type) {
     // UART SET UP
@@ -64,4 +68,18 @@ int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, 
     return 1;
 }
 
+void save_payload(char *payload, int16_t payload_dim){
+    for(int16_t i = 0; i<payload_dim; i++){
+        payload_buffer[tail_pl] = payload[i];
+        tail_pl++;
+    }
+}
 
+int16_t payload_empty(){
+    int16_t temp = 0;
+    if(tail_pl == head_pl){
+        temp = 1;
+    }
+    return temp;
+}
+    

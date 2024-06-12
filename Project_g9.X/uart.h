@@ -35,11 +35,12 @@
 #include "string.h"
 #include "timer.h"
 
-#define UART_BUFF_DIM 36 
+#define RX_DIM 200
 
 // set all UART mode, pin, interrupts ecc
-int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type); 
+int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
 
+// save the paiload
+void save_payload(char *payload, int16_t payload_dim);
 
-
-
+int16_t payload_empty();

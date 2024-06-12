@@ -17,7 +17,8 @@ typedef struct{
     int t;
 }move;
 
-int is_waiting=1; //wait status
+int16_t is_waiting = 1; //wait status
+int16_t new_command = 0;//notify command to be converted
 
 parser_state pstate;
 
@@ -49,7 +50,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
     // after a char is recived, start the parsing
     new_char = U1RXREG;
     if(parse_byte(&pstate, new_char) == NEW_MESSAGE){
-        LATGbits.LATG9 = 1;
+        //LATGbits.LATG9 = 1;
+        
+        // se riceviamo un nuovo messaggio
+        // salviamo il payload in un buffer secondario
+        save_payload(pstate.msg_payload, pstate.index_payload);
+        // attiviamo la conversione
+        new_command = 1;
     }
 }
 
@@ -107,6 +114,13 @@ int main(void) {
     
     while(1){
         scheduler(schedInfo,MAX_TASKS);
+        if(new_command){
+            if(!payload_empty()){
+                LATGbits.LATG9 = 1;
+            }
+        }
+            
+        
         tmr_wait_period_busy(TIMER3);
     }
     
