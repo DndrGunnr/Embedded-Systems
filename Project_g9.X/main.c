@@ -9,14 +9,7 @@
 #include "xc.h"
 #include "timer.h"
 #include "uart.h"
-
-#define MAX_TASKS 1
-
-typedef struct{
-    int16_t n;
-    int16_t N;
-    int16_t enable;
-}heartbeat;
+#include "scheduler.h"
 
 int is_waiting=1; //wait status
 int led_blink_counter=0; //in order to use the same timer for the main loop and the led blinking
@@ -81,48 +74,20 @@ void setup(){
     //uart setup
     //int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type
     uart_setup(1,0,1,0);
+    
+    // scheduler initialization
+    init_scheduler();
 }
 
-void scheduler(heartbeat task_list[], int16_t state);
-void task_blinkLed(int16_t state);
+
 
 int main(void) {
     setup();
-    heartbeat task_list[MAX_TASKS];
     
-    task_list[0].n = 0;
-    task_list[0].N = 1000;
-    task_list[0].enable = 1;
     
     while(1){
-        scheduler(task_list, is_waiting);
+        scheduler(is_waiting);
         tmr_wait_period(TIMER3);
     }
-    
-    
     return 0;
-}
-
-// -----------------------------------------------------Function definition------------------------------------------------------------------ //
-void scheduler(heartbeat task_list[], int16_t state){
-    for(int16_t i = 0; i < MAX_TASKS; i++){
-        task_list[i].n++;
-        if(task_list[i].enable == 1 && task_list[i].n == task_list[i].N){
-            switch(i){
-                case 0:
-                    task_blinkLed(state);
-                    break;
-            }
-            task_list[i].n = 0;
-        }
-    }
-}
-
-
-void task_blinkLed(int16_t state){
-    LATAbits.LATA0=(!LATAbits.LATA0);
-        if(state){
-            LATBbits.LATB8=(!LATBbits.LATB8);
-            LATFbits.LATF1=(!LATFbits.LATF1);
-        }  
 }
