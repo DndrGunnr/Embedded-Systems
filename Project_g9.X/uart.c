@@ -69,9 +69,54 @@ int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, 
 }
 
 void save_payload(char *payload, int16_t payload_dim){
+    int16_t wrong_comm = 0;
+    
     for(int16_t i = 0; i<payload_dim; i++){
-        payload_buffer[tail_pl] = payload[i];
-        tail_pl++;
+        switch (payload_buffer[tail_pl]) {
+            case ',': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '\0': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '0': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '1': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '2': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '3': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '4': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '5': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '6': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '7': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '8': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            case '9': payload_buffer[tail_pl] = payload[i];
+                tail_pl++;
+                break; // go on
+            default: wrong_comm = 1;
+                break; // discard command
+        }
+    }
+    
+    if(wrong_comm == 1){
+        LATGbits.LATG9 = 1;
+        head_pl = tail_pl;
     }
 }
 
@@ -92,10 +137,25 @@ void print_buff_log(){
     }
 }
 
+void print_comm_log(int16_t x, int16_t t){
+    char toSend[100];
+    sprintf(toSend, "%d %d,", x, t);
+    for(int16_t i = 0; i<strlen(toSend); i++){
+        while (U1STAbits.UTXBF);
+        U1TXREG = toSend[i];
+    }
+}
+
 void move_payload_head(int16_t bytes){
-    head_pl = head_pl + bytes;
+    /*head_pl = head_pl + bytes;
     if(head_pl > RX_DIM){
         head_pl = 0;
+    }*/
+    for(int16_t i = 0; i<bytes; i++){
+        head_pl++;
+        if(head_pl > RX_DIM){
+            head_pl = 0;
+        }
     }
 }
 

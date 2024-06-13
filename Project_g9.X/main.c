@@ -124,7 +124,7 @@ int main(void) {
         scheduler(schedInfo, MAX_TASKS);
         if(new_command == 1){
             //LATGbits.LATG9 = 1;
-            print_buff_log();
+            //print_buff_log();
             if(payload_empty() == 0){
                 faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
                 // I want the position to the first char of the current command
@@ -148,6 +148,7 @@ int main(void) {
             }
             new_command = 0;
             //print_buff_log();
+            print_comm_log(command_1.x, command_1.t);
         }
         
         /*if(command_1[index_comm].t > 0){

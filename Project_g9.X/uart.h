@@ -52,3 +52,4 @@ char *get_payload();
 int16_t get_payload_head();
 
 void print_buff_log();
+void print_comm_log(int16_t x, int16_t t);
