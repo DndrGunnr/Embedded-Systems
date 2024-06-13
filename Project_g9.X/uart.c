@@ -72,51 +72,27 @@ void save_payload(char *payload, int16_t payload_dim){
     int16_t wrong_comm = 0;
     
     for(int16_t i = 0; i<payload_dim; i++){
-        switch (payload_buffer[tail_pl]) {
-            case ',': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '\0': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '0': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '1': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '2': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '3': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '4': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '5': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '6': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '7': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '8': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            case '9': payload_buffer[tail_pl] = payload[i];
-                tail_pl++;
-                break; // go on
-            default: wrong_comm = 1;
-                break; // discard command
-        }
+        if(payload[i] > 48 && payload[i] < 57){
+            payload_buffer[tail_pl] = payload[i];
+            tail_pl++;
+        }else{
+            switch (payload[i]) {
+                case ',': payload_buffer[tail_pl] = payload[i];
+                    tail_pl++;
+                    break; // go on
+                case '\0': payload_buffer[tail_pl] = payload[i];
+                    tail_pl++;
+                    break; // go on
+                default: wrong_comm = 1;
+                    break; // discard command
+            }
+        }  
     }
     
     if(wrong_comm == 1){
-        LATGbits.LATG9 = 1;
+        //LATGbits.LATG9 = 1;
         head_pl = tail_pl;
+        //return 0;
     }
 }
 
