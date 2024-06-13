@@ -54,9 +54,9 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
         
         // se riceviamo un nuovo messaggio
         // salviamo il payload in un buffer secondario
-        save_payload(pstate.msg_payload, pstate.index_payload);
+        if(save_payload(pstate.msg_payload, pstate.index_payload))
+            new_command++;
         // attiviamo la conversione
-        new_command = 1;
     }
 }
 
@@ -122,7 +122,7 @@ int main(void) {
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
-        if(new_command == 1){
+        if(new_command > 0){
             //LATGbits.LATG9 = 1;
             print_buff_log();
             if(payload_empty() == 0){
@@ -141,12 +141,12 @@ int main(void) {
                 
                 index_pl = next_value((faux_pl+index_pl), 0);
                 
-                move_payload_head(index_pl - 1); // move payload head to the last char int the buffer
+                move_payload_head(index_pl); // move payload head to the last char int the buffer
                 
                 index_pl = 0;
                 //index_comm ++;
             }
-            new_command = 0;
+            new_command--;
             //print_buff_log();
             //print_comm_log(command_1.x, command_1.t);
         }

@@ -68,7 +68,7 @@ int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, 
     return 1;
 }
 
-void save_payload(char *payload, int16_t payload_dim){
+int16_t save_payload(char *payload, int16_t payload_dim){
     int16_t wrong_comm = 0;
     
     for(int16_t i = 0; i<payload_dim; i++){
@@ -87,13 +87,21 @@ void save_payload(char *payload, int16_t payload_dim){
                     break; // discard command
             }
         }  
+        tail_pl = tail_pl % RX_DIM;
+        // used to put tail to zero at the end of the buffer
     }
     
     if(wrong_comm == 1){
         //LATGbits.LATG9 = 1;
         head_pl = tail_pl;
-        //return 0;
+        // cannot put tail = head to avoid mixing different commands
+        return 0;
     }
+    
+    tail_pl ++;
+    // move tail to the next place to avoid overwriting the '\0' char, after error control
+    // to avoid waste buffer space
+    return 1;
 }
 
 int16_t payload_empty(){

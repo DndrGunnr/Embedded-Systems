@@ -41,7 +41,7 @@
 int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
 
 // save the paiload
-void save_payload(char *payload, int16_t payload_dim);
+int16_t save_payload(char *payload, int16_t payload_dim);
 
 int16_t payload_empty();
 
