@@ -64,6 +64,16 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1TXInterrupt(){
     IFS0bits.U1TXIF = 0;
+    char *faux_re = get_responce();
+    
+    while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
+        if(responce_empty()){ // if the index is greater or equal to the current message dimension exit from the loop
+            break;
+        }else{
+            U1TXREG = faux_re[get_responce_head()]; // insert the first available char from the string to the TX trasmint buffer 
+            move_responce_head(); // increase the string index
+        }
+    }
 }
 
 /*void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(){
@@ -124,10 +134,10 @@ int main(void) {
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
-        if(index_comm < MAX_COMMAND){
-            if (new_command > 0) {
+        if(new_command > 0){
+            if (index_comm < MAX_COMMAND ) {
                 //LATGbits.LATG9 = 1;
-                print_buff_log();
+                //print_buff_log();
                 if (payload_empty() == 0) {
                     faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
                     // I want the position to the first char of the current command
@@ -153,12 +163,23 @@ int main(void) {
                 index_comm++;
                 //print_buff_log();
                 //print_comm_log(command_1.x, command_1.t);
+                append_responce(1);
+                
+            } else {
+                /*for(int16_t i = 0; i<MAX_COMMAND; i++){
+                    print_comm_log(command[i].x, command[i].t);
+                }
+                index_comm = 0; // only for debug
+                 */
+                append_responce(2);
+                discard_command();
+                if(payload_empty()){
+                    LATGbits.LATG9 = (!LATGbits.LATG9);
+                }
+                
+                new_command--;
             }
-        }else{
-            for(int16_t i = 0; i<MAX_COMMAND; i++){
-                print_comm_log(command[i].x, command[i].t);
-            }
-            index_comm = 0; // only for debug
+            
         }
         
         /*if(command_1[index_comm].t > 0){

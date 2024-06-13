@@ -11,10 +11,18 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "math.h"
+
+char command_good_str[AK_DIM] = "$MACK,1*";
+char command_bad_str[AK_DIM]  = "$MACK,0*";
 
 char payload_buffer[RX_DIM];
 int16_t head_pl = 0;
 int16_t tail_pl = 0;
+
+char responce_buffer[TX_DIM];
+int16_t head_re = 0;
+int16_t tail_re = 0;
 
 
 int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type) {
@@ -112,6 +120,81 @@ int16_t payload_empty(){
     return temp;
 }
 
+void discard_command(){
+    head_pl = tail_pl;
+}
+
+int16_t responce_empty(){
+    int16_t temp = 0;
+    if(tail_re == head_re){
+        temp = 1;
+    }
+    return temp;
+}
+
+/*
+ int16_t responce_item(){
+    int16_t temp = 0;
+    return abs(tail_re - head_re);
+}
+*/
+
+char *get_payload(){
+    return payload_buffer;
+}
+
+char *get_responce(){
+    return responce_buffer;
+}
+
+int16_t get_payload_head(){
+    return head_pl;
+}
+
+int16_t get_responce_head(){
+    return head_re;
+}
+
+void move_payload_head(int16_t bytes){
+    for(int16_t i = 0; i<bytes; i++){
+        head_pl++;
+        if(head_pl > RX_DIM){
+            head_pl = 0;
+        }
+    }
+}
+
+void move_responce_head(){
+    head_re++;
+    if (head_re > TX_DIM) {
+        head_re = 0;
+    }
+}
+  
+void append_responce(int16_t type){
+    switch(type){
+        case 1:
+            for(int16_t i = 0; i<AK_DIM; i++){
+                responce_buffer[tail_re] = command_good_str[i];
+                tail_re++;
+                tail_re = tail_re % TX_DIM;
+            }
+            break;
+        case 2:
+            for(int16_t i = 0; i<AK_DIM; i++){
+                responce_buffer[tail_re] = command_bad_str[i];
+                tail_re++;
+                tail_re = tail_re % TX_DIM;
+            }
+            break;
+    }
+    // kick start the communication
+    IFS0bits.U1TXIF = 1;
+} 
+
+
+
+// --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
 void print_buff_log(){
     char toSend[100];
     sprintf(toSend, "%d %d,", head_pl, tail_pl);
@@ -129,26 +212,3 @@ void print_comm_log(int16_t x, int16_t t){
         U1TXREG = toSend[i];
     }
 }
-
-void move_payload_head(int16_t bytes){
-    /*head_pl = head_pl + bytes;
-    if(head_pl > RX_DIM){
-        head_pl = 0;
-    }*/
-    for(int16_t i = 0; i<bytes; i++){
-        head_pl++;
-        if(head_pl > RX_DIM){
-            head_pl = 0;
-        }
-    }
-}
-
-char *get_payload(){
-    return payload_buffer;
-}
-
-int16_t get_payload_head(){
-    return head_pl;
-}
-
-    

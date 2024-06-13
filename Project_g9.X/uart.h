@@ -36,6 +36,8 @@
 #include "timer.h"
 
 #define RX_DIM 200
+#define TX_DIM 200
+#define AK_DIM 8 
 
 // set all UART mode, pin, interrupts ecc
 int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
@@ -43,13 +45,25 @@ int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t R
 // save the paiload
 int16_t save_payload(char *payload, int16_t payload_dim);
 
+void discard_command();
+
 int16_t payload_empty();
+int16_t responce_empty();
+
+//int16_t responce_item();
 
 void move_payload_head(int16_t bytes);
+void move_responce_head();
 
 char *get_payload();
+char *get_responce();
 
 int16_t get_payload_head();
+int16_t get_responce_head();
 
+void append_responce(int16_t type);
+
+
+// --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
 void print_buff_log();
 void print_comm_log(int16_t x, int16_t t);
