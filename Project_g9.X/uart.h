@@ -50,3 +50,5 @@ void move_payload_head(int16_t bytes);
 char *get_payload();
 
 int16_t get_payload_head();
+
+void print_buff_log();

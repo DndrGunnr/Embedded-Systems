@@ -83,6 +83,15 @@ int16_t payload_empty(){
     return temp;
 }
 
+void print_buff_log(){
+    char toSend[100];
+    sprintf(toSend, "%d %d,", head_pl, tail_pl);
+    for(int16_t i = 0; i<strlen(toSend); i++){
+        while (U1STAbits.UTXBF);
+        U1TXREG = toSend[i];
+    }
+}
+
 void move_payload_head(int16_t bytes){
     head_pl = head_pl + bytes;
     if(head_pl > RX_DIM){
