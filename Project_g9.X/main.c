@@ -12,6 +12,8 @@
 #include "scheduler.h"
 #include "parser.h"
 
+#define MAX_COMMAND 10
+
 typedef struct{
     int x;
     int t;
@@ -117,38 +119,46 @@ int main(void) {
     int16_t index_pl = 0;
     
     // command
-    move command_1;
-    //int16_t index_comm = 0;
+    move command[MAX_COMMAND];
+    int16_t index_comm = 0;
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
-        if(new_command > 0){
-            //LATGbits.LATG9 = 1;
-            print_buff_log();
-            if(payload_empty() == 0){
-                faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
-                // I want the position to the first char of the current command
-                
-                command_1.x = extract_integer(faux_pl); // send the extract integer with the payload buffer
-                // does not modify the indexes
-                
-                index_pl = next_value(faux_pl, 0); // get the index to the start of the next integer
-                // next value cycles trought the vector(first arg), from the position of the index(second arg)
-                
-                move_payload_head(index_pl); // move payload head index of index_pl places
-                
-                command_1.t = extract_integer(faux_pl+index_pl); // extract the second integer
-                
-                index_pl = next_value((faux_pl+index_pl), 0);
-                
-                move_payload_head(index_pl); // move payload head to the last char int the buffer
-                
-                index_pl = 0;
-                //index_comm ++;
+        if(index_comm < MAX_COMMAND){
+            if (new_command > 0) {
+                //LATGbits.LATG9 = 1;
+                print_buff_log();
+                if (payload_empty() == 0) {
+                    faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
+                    // I want the position to the first char of the current command
+
+                    command[index_comm].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
+                    // does not modify the indexes
+
+                    index_pl = next_value(faux_pl, 0); // get the index to the start of the next integer
+                    // next value cycles trought the vector(first arg), from the position of the index(second arg)
+
+                    move_payload_head(index_pl); // move payload head index of index_pl places
+
+                    command[index_comm].t = extract_integer(faux_pl + index_pl); // extract the second integer
+
+                    index_pl = next_value((faux_pl + index_pl), 0);
+
+                    move_payload_head(index_pl); // move payload head to the last char int the buffer
+
+                    index_pl = 0;
+                    //index_comm ++;
+                }
+                new_command--;
+                index_comm++;
+                //print_buff_log();
+                //print_comm_log(command_1.x, command_1.t);
             }
-            new_command--;
-            //print_buff_log();
-            //print_comm_log(command_1.x, command_1.t);
+        }else{
+            for(int16_t i = 0; i<MAX_COMMAND; i++){
+                print_comm_log(command[i].x, command[i].t);
+            }
+            index_comm = 0; // only for debug
         }
         
         /*if(command_1[index_comm].t > 0){

@@ -72,7 +72,7 @@ int16_t save_payload(char *payload, int16_t payload_dim){
     int16_t wrong_comm = 0;
     
     for(int16_t i = 0; i<payload_dim; i++){
-        if(payload[i] > 48 && payload[i] < 57){
+        if(payload[i] >= 48 && payload[i] <= 57){
             payload_buffer[tail_pl] = payload[i];
             tail_pl++;
         }else{
