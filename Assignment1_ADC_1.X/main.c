@@ -97,7 +97,7 @@ int main(void) {
     double TENValue;
     double BATValue;
     
-    tmr_setup_period(TIMER1, 200);
+    tmr_setup_period(TIMER1, 400);
     IEC0bits.T1IE = 1; // activate the timer interrupt
 
     

@@ -46,7 +46,6 @@ void __attribute__((__interrupt__, _auto_psv)) _T1Interrupt(void){
 }
 
 void ADC_read(){
-    AD1CON1bits.DONE = 0; // equivalente della flag
     int_counter ++;
     
     switch (int_counter){
@@ -63,6 +62,8 @@ void ADC_read(){
         default:
             break;
     }
+    
+     AD1CON1bits.DONE = 0; // equivalente della flag
 }
 
 
