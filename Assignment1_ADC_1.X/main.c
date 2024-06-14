@@ -96,7 +96,6 @@ int main(void) {
     int16_t ADCValue;
     double TENValue;
     double BATValue;
-    double PERValue;
     
     tmr_setup_period(TIMER1, 200);
     IEC0bits.T1IE = 1; // activate the timer interrupt
@@ -108,7 +107,7 @@ int main(void) {
             gl_sampl = 0;
             
             AD1CON1bits.SAMP = 1; // Start sampling
-            tmr_wait_ms(TIMER1, 1);
+            tmr_wait_ms(TIMER2, 1);
             AD1CON1bits.SAMP = 0; // Start the conversion
             while (!AD1CON1bits.DONE); // Wait for the conversion to complete
             ADCValue = ADC1BUF0;
