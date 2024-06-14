@@ -28,7 +28,8 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
     
     if (PORTEbits.RE8 == 1){   
         LATAbits.LATA0=1;
-        pwm_forward(10,2000);
+        tmr_setup_period(TIMER2,400);
+        tmr_wait_period_busy(TIMER2);
         
             
     }
@@ -37,15 +38,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
 }
 
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(){
-    IFS0bits.T2IF=0;
-    T2CONbits.TON=0;
-    //unmapping output compare pins to stop motion
-    RPOR0bits.RP65R=0;
-    RPOR1bits.RP66R=0; 
-    RPOR1bits.RP67R=0;
-    RPOR2bits.RP68R=0;
-}
+
 
 
 int main(void) {
