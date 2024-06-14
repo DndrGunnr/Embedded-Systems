@@ -173,7 +173,7 @@ int tmr_wait_period_busy(int timer){
         case 2:
             ret_val = IFS0bits.T2IF;    // save flag value before reset
             while(IFS0bits.T2IF != 1);
-            //IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+            IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
             TMR2 = 0;                   // reset the timer and start watching the flag
 
             break;

@@ -25,6 +25,8 @@ int16_t new_command = 0;//notify command to be converted
 parser_state pstate;
 
 void task_blink_led(void* param);
+void task_battery_log(void *param);
+void task_infraRed_log(void *param);
 void scheduler_setup(heartbeat schedInfo[]);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
@@ -212,6 +214,14 @@ void task_blink_led(void* param){
     }
 }
 
+void task_battery_log(void *param){
+    break;
+}
+
+void task_infraRed_log(void *param){
+    break;
+}
+
 void scheduler_setup(heartbeat schedInfo[]){
     // led blink task
     schedInfo[0].N=1000;
@@ -220,9 +230,9 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[0].params= (void*)(&is_waiting);
     schedInfo[0].enable=1;
     
-    // new command conversion and saving
-    
     // battery sensing and logging 
+    
+    
     
     // IR logging
 }

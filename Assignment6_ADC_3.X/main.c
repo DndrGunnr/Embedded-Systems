@@ -26,7 +26,7 @@ int16_t send_data = 0;
 
     
 
-void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
+void __attribute__((__interrupt__, __no_auto_psv__))_U1TXInterrupt(void) {
     IFS0bits.U1TXIF = 0; 
     
     while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
@@ -37,35 +37,15 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
             gl_index = gl_index + 1; // increase the string index
         }
     }
+    
+    //U1TXREG = 'K';
 }
 
-void __attribute__((__interrupt__, _auto_psv)) _T1Interrupt(void){
+void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void){
     send_data = 1;
     IFS0bits.T1IF = 0; // set timer flag to 0 --> to read next interrupt
     TMR1 = 0;           // reset timer
 }
-
-void ADC_read(){
-    int_counter ++;
-    
-    switch (int_counter){
-        case 3:
-            ADCIFR = ADC1BUF1;
-            break;
-        case 6:
-            ADCBAT = ADC1BUF1;
-            break;
-        case 8:
-            int_counter = 0;
-            break;
-            
-        default:
-            break;
-    }
-    
-     AD1CON1bits.DONE = 0; // equivalente della flag
-}
-
 
 int main(void) {
     ANSELA = ANSELB = ANSELC = ANSELD = ANSELE = ANSELG = 0X0000;// analog pin disableing
@@ -76,7 +56,7 @@ int main(void) {
      */
     
     
-    // ----------------------- ADC set up ---------------------
+    /*// ----------------------- ADC set up ---------------------
     AD1CON3bits.ADCS = 8; // ADC conversion clock select bits
     // set the speed of the conversion
     // selects how long is one Tad [1 Tcy - 64 Tcy]
@@ -92,7 +72,7 @@ int main(void) {
     AD1CON1bits.SSRC = 7;
     
     // scan mode activation
-    // sequenza di scan di tutti gli input analogici su CH0
+    // attiva scan degli input
     AD1CON2bits.CSCNA = 1;
     
     // channel number selection
@@ -113,17 +93,53 @@ int main(void) {
         // pag 13 del data sheet ADC
     
     // analog pin mode selection
-    ANSELBbits.ANSB5 = 1;
-        // pag 115 data sheet completo
-    
-    // analog pin mode selection
+    ANSELBbits.ANSB5  = 1;
     ANSELBbits.ANSB11 = 1;
+        // pag 115 data sheet completo
+    // insert the AN5 and AN11 in the scan input subset
+    AD1CSSLbits.CSS5  = 1;
+    AD1CSSLbits.CSS11 = 1;
     
     // SMPI settings
     AD1CON2bits.SMPI = 1;       // n of sequential operation before interrupt (if sequential is set)
     
     // ADC activation
-    AD1CON1bits.ADON = 1;
+    AD1CON1bits.ADON = 1;*/
+    
+    
+    
+    AD1CON3bits.ADCS = 8; // ADC conversion clock  - Tad = 5 * TCY
+    AD1CON3bits.SAMC = 16;// Auto sample time bits - 16 Tad
+    
+    AD1CON1bits.ASAM = 1; // Automatic sampling
+    AD1CON1bits.SSRC = 7; // Automatic conversion
+    
+    AD1CON2bits.CSCNA = 1;// Scan mode activation
+    
+    AD1CON2bits.CHPS = 0; // Channel number selection
+    AD1CHS0bits.CH0NA = 0;// Channel 0 negative input is VREFL
+    
+    ANSELBbits.ANSB5 = 1;// analog pin mode selection
+    ANSELBbits.ANSB11 = 1;// activate AN5 AN11
+    
+    // dal file di dave+annika
+    TRISBbits.TRISB11 = 1;
+    TRISBbits.TRISB5 = 1;
+    
+    TRISBbits.TRISB4 = 1;
+    LATBbits.LATB4 = 1;
+    // dal file di dave+annika
+
+    AD1CSSLbits.CSS14 = 1;// insert AN5 AN11 in the scan sequence
+    AD1CSSLbits.CSS11 = 1;
+    
+    AD1CON2bits.SMPI = 1;// n of sequential operation before interrupt (if sequential is set)
+    
+    AD1CON1bits.AD12B = 0;// set 10bit adc
+    
+    
+    
+    AD1CON1bits.ADON = 1;// ADC activation
     
     // debug led
     TRISGbits.TRISG9 = 0;
@@ -140,14 +156,44 @@ int main(void) {
     double QV_bat, TN_bat;
     double QV_ifr, TN_ifr, CM_ifr;
     
+    
     while(1){
-        if (AD1CON1bits.DONE){
-            ADC_read();
-        }
-        
         if(send_data){
+            gl_index = 0;
+        
+            ADCIFR = ADC1BUF0;
+            ADCBAT = ADC1BUF1;
+
+            QV_bat = ADCBAT / lv_conv;
+            QV_ifr = ADCIFR / lv_conv;
+
+            // conversione in volt
+            TN_bat = (QV_bat * volt) * partitore;
+            TN_ifr = QV_ifr * volt;
+
+            // conversione cm
+            CM_ifr = (2.34 - 4.74 * TN_ifr + 4.06 * pow(TN_ifr, 2) - 1.60 * pow(TN_ifr, 3) + 0.24 * pow(TN_ifr, 4))*100;
+
+            sprintf(gl_toSend, "%f %f,", TN_bat, CM_ifr);
+            gl_toSendLen = strlen(gl_toSend);
+            if (gl_toSendLen > 0) {
+                LATGbits.LATG9 = (!LATGbits.LATG9);
+            }
+
+            IFS0bits.U1TXIF = 1;
+            send_data = 0;
+        }
+    }
+            
+    return 0;
+}
+
+
+/*if(send_data){
+            ADC_read();
+            
             // quantizzazione
-            LATAbits.LATA0 = 1;
+            LATAbits.LATA0 = (!LATAbits.LATA0);
             QV_bat = ADCBAT / lv_conv;
             QV_ifr = ADCIFR / lv_conv;
            
@@ -166,8 +212,4 @@ int main(void) {
 
             IFS0bits.U1TXIF = 1;
             send_data = 0;
-        }       
-    }
-            
-    return 0;
-}
+        }  */

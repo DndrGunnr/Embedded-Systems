@@ -22,7 +22,7 @@ int16_t gl_toSendLen = 0;
 char gl_toSend[4];
     
 
-void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
+void __attribute__((__interrupt__, __no_auto_psv__))_U1TXInterrupt(void) {
     IFS0bits.U1TXIF = 0; 
     
     while(U1STAbits.UTXBF == 0){ // until the TX trasmint buffer is full
@@ -35,7 +35,7 @@ void __attribute__((__interrupt__, no_auto_psv__))_U1TXInterrupt(void) {
     }
 }
 
-void __attribute__((__interrupt__, no_auto_psv__))_T1Interrupt(void){
+void __attribute__((__interrupt__, __no_auto_psv__))_T1Interrupt(void){
     IFS0bits.T1IF = 0; // flag down
     TMR1 = 0; // reset timer
     
