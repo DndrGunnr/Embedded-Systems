@@ -162,8 +162,8 @@ int main(void) {
         if(send_data){
             gl_index = 0;
         
-            ADCIFR = ADC1BUF0;
-            ADCBAT = ADC1BUF1;
+            ADCBAT = ADC1BUF0;
+            ADCIFR = ADC1BUF1;
 
             QV_bat = ADCBAT / lv_conv;
             QV_ifr = ADCIFR / lv_conv;
