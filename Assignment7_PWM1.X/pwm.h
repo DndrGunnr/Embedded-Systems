@@ -14,6 +14,8 @@ void pwm_counter_clockwise(int);
 
 void pwm_stop(void);
 
+void pwm_setup(void);
+
 
 
 

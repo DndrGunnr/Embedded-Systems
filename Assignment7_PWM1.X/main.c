@@ -28,8 +28,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
     
     if (PORTEbits.RE8 == 1){   
         LATAbits.LATA0=1;
-        tmr_setup_period(TIMER2,400);
-        tmr_wait_period_busy(TIMER2);
+        pwm_forward(200);
         
             
     }

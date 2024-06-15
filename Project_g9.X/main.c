@@ -20,6 +20,12 @@ typedef struct{
     int t;
 }move;
 
+typedef struct{
+    int head;
+    int tail;
+    int is_full;
+}buffer;
+
 //states
 int16_t is_waiting = 1; //wait status
 int16_t is_moving = 0;
@@ -34,7 +40,7 @@ void task_infraRed_log(void *param);
 void task_move(void* param);
 void scheduler_setup(heartbeat schedInfo[]);
 void command_to_pwm(int);
-int get_queue_length(int,int);
+int get_queue_length(buffer buff);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
     
@@ -118,6 +124,8 @@ void setup(){
     //uart setup
     //int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type
     uart_setup(1,0,1,0);
+    //pwm setup
+    pwm_setup();
     
     TRISGbits.TRISG9 = 0;
 }
@@ -139,8 +147,10 @@ int main(void) {
     
     // command
     move command_queue[MAX_COMMAND];
-    int16_t queue_tail = 0; 
-    int16_t queue_head = 0;
+    buffer buff;
+    buff.head=0;
+    buff.tail=0;
+    buff.is_full=0;
     //state
 
     
@@ -149,14 +159,14 @@ int main(void) {
         if(new_command > 0){
             
             
-            if (get_queue_length(queue_head,queue_tail)<MAX_COMMAND ) {
+            if (buff.is_full == 0) {
                 //LATGbits.LATG9 = 1;
                 //print_buff_log();
                 if (payload_empty() == 0) {
                     faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
                     // I want the position to the first char of the current command
 
-                    command_queue[queue_tail].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
+                    command_queue[buff.tail].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
                     // does not modify the indexes
 
                     index_pl = next_value(faux_pl, 0); // get the index to the start of the next integer
@@ -164,7 +174,7 @@ int main(void) {
 
                     move_payload_head(index_pl); // move payload head index of index_pl places
 
-                    command_queue[queue_tail].t = extract_integer(faux_pl + index_pl); // extract the second integer
+                    command_queue[buff.tail].t = extract_integer(faux_pl + index_pl); // extract the second integer
 
                     index_pl = next_value((faux_pl + index_pl), 0);
 
@@ -174,7 +184,9 @@ int main(void) {
                     //queue_tail ++;
                 }
                 new_command--;
-                queue_tail=(queue_tail+1)%MAX_COMMAND;
+                buff.tail = (buff.tail + 1) % MAX_COMMAND;
+                if (buff.tail == buff.head)
+                    buff.is_full=1;
                 //print_buff_log();
                 //print_comm_log(command_queue_1.x, command_queue_1.t);
                 append_responce(1);
@@ -196,12 +208,16 @@ int main(void) {
 
             
         }
-        if (!is_moving) {
-            if (get_queue_length(queue_head,queue_tail)>0) {
-                schedInfo[1].N = command_queue[ queue_head ].t; //set up the heartbeat duration
-                command_to_pwm(command_queue[queue_head].x); //start motors
-                queue_head = (queue_head+1) % MAX_COMMAND; //to account for wrap around
-                is_moving=1;
+        if (is_waiting == 0) {
+            if (is_moving == 0) {
+                if (get_queue_length(buff) > 0) {
+                    schedInfo[1].N = command_queue[ buff.head ].t; //set up the heartbeat duration
+                    command_to_pwm(command_queue[buff.head].x); //start motors
+                    buff.head = (buff.head + 1) % MAX_COMMAND; //to account for wrap around
+                    buff.is_full=0;
+                    is_moving = 1;
+                    LATGbits.LATG9=is_moving;
+                }
             }
         }
         
@@ -246,7 +262,8 @@ void task_infraRed_log(void *param){
 void task_move(void *param){
     int* is_moving = (int*) param;
     pwm_stop();
-    is_moving=0;
+    *is_moving=0;
+    LATGbits.LATG9=*is_moving;
 }
 
 void scheduler_setup(heartbeat schedInfo[]){
@@ -291,11 +308,16 @@ void command_to_pwm(int cmd){
     }
 }
 
-int get_queue_length(int head,int tail){
+int get_queue_length(buffer buff) {
     int length;
-    if (tail>=head)
-        length=tail-head;
+    if (buff.tail > buff.head)
+        length = buff.tail - buff.head;
+    else if (buff.tail == buff.head)
+        if (buff.is_full == 0)
+            length = 0;
+        else
+            length = MAX_COMMAND;
     else
-        length=MAX_COMMAND-head+tail;
+        length = MAX_COMMAND - buff.head + buff.tail;
     return length;
 }

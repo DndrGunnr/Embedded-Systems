@@ -15,7 +15,7 @@ void pwm_setup() {
     ANSELD = 0x001E; // corresponding to binary 0000 000 0001 1110 that enable analog communication in pins RD1-4
     OC1CON1bits.OCTSEL = 0b111; //peripheral clock as source
     OC1CON1bits.OCM = 0b110; //edge aligned PWM
-    OC1CON2bits.SYNCSEL = 0; //no sync source
+    OC1CON2bits.SYNCSEL = 0b11111; //no sync source
     OC1RS = 7200; //pwm set to 10 KHz
     //set motor pins to output
     TRISDbits.TRISD1 = 0;
@@ -25,7 +25,7 @@ void pwm_setup() {
 }
 
 void pwm_forward() {
-    OC1R = OC1RS * DUTY_CYCLE / 100;
+    OC1R = 6000;
     RPOR1bits.RP66R = PWM; //RP66 remapped to OC1
     RPOR2bits.RP68R = PWM; // RP68 remapped to OC1
     LATDbits.LATD1 = 0;
@@ -33,7 +33,7 @@ void pwm_forward() {
 }
 
 void pwm_backward() {
-    OC1R = OC1RS * DUTY_CYCLE / 100;
+    OC1R = 6000;
     RPOR0bits.RP65R = PWM; //RP65 remapped to OC1
     RPOR1bits.RP67R = PWM; // RP67 remapped to OC1
     LATDbits.LATD2 = 0;
@@ -41,7 +41,7 @@ void pwm_backward() {
 }
 
 void pwm_clockwise() {
-    OC1R = OC1RS * DUTY_CYCLE / 100;
+    OC1R = 6000;
     RPOR1bits.RP66R = PWM;
     RPOR1bits.RP67R = PWM;
     LATDbits.LATD1 = 0;
@@ -49,7 +49,7 @@ void pwm_clockwise() {
 }
 
 void pwm_counter_clockwise() {
-    OC1R = OC1RS * DUTY_CYCLE / 100;
+    OC1R = 6000;
     RPOR0bits.RP65R = PWM;
     RPOR2bits.RP68R = PWM;
     LATDbits.LATD2 = 0;
