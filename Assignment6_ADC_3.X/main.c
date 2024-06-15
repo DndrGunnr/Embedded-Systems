@@ -109,8 +109,9 @@ int main(void) {
     AD1CON1bits.ADON = 1;*/
     
     
+    AD1CON1bits.AD12B = 0;// set 10bit adc
     
-    AD1CON3bits.ADCS = 64; // ADC conversion clock  - Tad = 5 * TCY
+    AD1CON3bits.ADCS = 63; // ADC conversion clock  - Tad = 5 * TCY
     AD1CON3bits.SAMC = 31;// Auto sample time bits - 16 Tad
     
     AD1CON1bits.ASAM = 1; // Automatic sampling
@@ -121,7 +122,7 @@ int main(void) {
     AD1CON2bits.CHPS = 0; // Channel number selection
     AD1CHS0bits.CH0NA = 0;// Channel 0 negative input is VREFL
     
-    ANSELBbits.ANSB5 = 1;// analog pin mode selection
+    ANSELBbits.ANSB15 = 1;// analog pin mode selection
     ANSELBbits.ANSB11 = 1;// activate AN5 AN11
     
     // dal file di dave+annika
@@ -136,8 +137,6 @@ int main(void) {
     AD1CSSLbits.CSS11 = 1;
     
     AD1CON2bits.SMPI = 1;// n of sequential operation before interrupt (if sequential is set)
-    
-    AD1CON1bits.AD12B = 0;// set 10bit adc
     
     
     
