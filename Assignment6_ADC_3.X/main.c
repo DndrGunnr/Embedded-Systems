@@ -6,6 +6,8 @@
  */
 
 
+#include <p33EP512MU810.h>
+
 #include "xc.h"
 #include "uart.h"
 #include "timer.h"
@@ -108,8 +110,8 @@ int main(void) {
     
     
     
-    AD1CON3bits.ADCS = 8; // ADC conversion clock  - Tad = 5 * TCY
-    AD1CON3bits.SAMC = 16;// Auto sample time bits - 16 Tad
+    AD1CON3bits.ADCS = 64; // ADC conversion clock  - Tad = 5 * TCY
+    AD1CON3bits.SAMC = 31;// Auto sample time bits - 16 Tad
     
     AD1CON1bits.ASAM = 1; // Automatic sampling
     AD1CON1bits.SSRC = 7; // Automatic conversion
@@ -124,10 +126,10 @@ int main(void) {
     
     // dal file di dave+annika
     TRISBbits.TRISB11 = 1;
-    TRISBbits.TRISB5 = 1;
+    TRISBbits.TRISB15 = 1;
     
-    TRISBbits.TRISB4 = 1;
-    LATBbits.LATB4 = 1;
+    TRISAbits.TRISA9 = 0;//set ir enable 
+    LATAbits.LATA9 = 1;
     // dal file di dave+annika
 
     AD1CSSLbits.CSS14 = 1;// insert AN5 AN11 in the scan sequence
