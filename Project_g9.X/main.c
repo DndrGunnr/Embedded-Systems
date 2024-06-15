@@ -27,6 +27,7 @@ parser_state pstate;
 void task_blink_led(void* param);
 void task_battery_log(void *param);
 void task_infraRed_log(void *param);
+void task_move(void *param);
 void scheduler_setup(heartbeat schedInfo[]);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
@@ -133,6 +134,7 @@ int main(void) {
     // command
     move command[MAX_COMMAND];
     int16_t index_comm = 0;
+    int16_t is_moving = 0;
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
@@ -181,7 +183,13 @@ int main(void) {
                 
                 new_command--;
             }
+
             
+        }
+        if(!is_moving){
+            if(index_comm!=0){
+                    
+            }
         }
         
         /*if(command_1[index_comm].t > 0){
@@ -220,6 +228,10 @@ void task_battery_log(void *param){
 
 void task_infraRed_log(void *param){
     break;
+}
+
+void task_move(void *param){
+    
 }
 
 void scheduler_setup(heartbeat schedInfo[]){
