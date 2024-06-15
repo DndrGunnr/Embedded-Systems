@@ -24,7 +24,7 @@ void pwm_setup() {
     TRISDbits.TRISD4 = 0;
 }
 
-void pwm_forward(int time) {
+void pwm_forward() {
     OC1R = OC1RS * DUTY_CYCLE / 100;
     RPOR1bits.RP66R = PWM; //RP66 remapped to OC1
     RPOR2bits.RP68R = PWM; // RP68 remapped to OC1
@@ -32,7 +32,7 @@ void pwm_forward(int time) {
     LATDbits.LATD3 = 0;
 }
 
-void pwm_backward(int time) {
+void pwm_backward() {
     OC1R = OC1RS * DUTY_CYCLE / 100;
     RPOR0bits.RP65R = PWM; //RP65 remapped to OC1
     RPOR1bits.RP67R = PWM; // RP67 remapped to OC1
@@ -40,7 +40,7 @@ void pwm_backward(int time) {
     LATDbits.LATD4 = 0;
 }
 
-void pwm_clockwise(int time) {
+void pwm_clockwise() {
     OC1R = OC1RS * DUTY_CYCLE / 100;
     RPOR1bits.RP66R = PWM;
     RPOR1bits.RP67R = PWM;
@@ -48,7 +48,7 @@ void pwm_clockwise(int time) {
     LATDbits.LATD4 = 0;
 }
 
-void pwm_counter_clockwise(int time) {
+void pwm_counter_clockwise() {
     OC1R = OC1RS * DUTY_CYCLE / 100;
     RPOR0bits.RP65R = PWM;
     RPOR2bits.RP68R = PWM;
@@ -56,9 +56,10 @@ void pwm_counter_clockwise(int time) {
     LATDbits.LATD3 = 0;
 }
 
-void pwm_stop(void){
+void pwm_stop(){
     RPOR0bits.RP65R = 0;
     RPOR1bits.RP66R = 0;
     RPOR1bits.RP67R = 0;
     RPOR2bits.RP68R = 0;
 }
+

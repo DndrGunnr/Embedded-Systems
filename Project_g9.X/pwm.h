@@ -4,13 +4,13 @@
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 
-void pwm_forward(int);
+void pwm_forward(void);
 
-void pwm_backward(int);
+void pwm_backward(void);
 
-void pwm_clockwise(int);
+void pwm_clockwise(void);
 
-void pwm_counter_clockwise(int);
+void pwm_counter_clockwise(void);
 
 void pwm_stop(void);
 

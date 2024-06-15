@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "scheduler.h"
 #include "parser.h"
+#include "pwm.h"
 
 #define MAX_COMMAND 10
 
@@ -19,7 +20,10 @@ typedef struct{
     int t;
 }move;
 
+//states
 int16_t is_waiting = 1; //wait status
+int16_t is_moving = 0;
+
 int16_t new_command = 0;//notify command to be converted
 
 parser_state pstate;
@@ -27,8 +31,10 @@ parser_state pstate;
 void task_blink_led(void* param);
 void task_battery_log(void *param);
 void task_infraRed_log(void *param);
-void task_move(void *param);
+void task_move(void* param);
 void scheduler_setup(heartbeat schedInfo[]);
+void command_to_pwm(int);
+int get_queue_length(int,int);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
     
@@ -132,21 +138,25 @@ int main(void) {
     int16_t index_pl = 0;
     
     // command
-    move command[MAX_COMMAND];
-    int16_t index_comm = 0;
-    int16_t is_moving = 0;
+    move command_queue[MAX_COMMAND];
+    int16_t queue_tail = 0; 
+    int16_t queue_head = 0;
+    //state
+
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
         if(new_command > 0){
-            if (index_comm < MAX_COMMAND ) {
+            
+            
+            if (get_queue_length(queue_head,queue_tail)<MAX_COMMAND ) {
                 //LATGbits.LATG9 = 1;
                 //print_buff_log();
                 if (payload_empty() == 0) {
                     faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
                     // I want the position to the first char of the current command
 
-                    command[index_comm].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
+                    command_queue[queue_tail].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
                     // does not modify the indexes
 
                     index_pl = next_value(faux_pl, 0); // get the index to the start of the next integer
@@ -154,26 +164,26 @@ int main(void) {
 
                     move_payload_head(index_pl); // move payload head index of index_pl places
 
-                    command[index_comm].t = extract_integer(faux_pl + index_pl); // extract the second integer
+                    command_queue[queue_tail].t = extract_integer(faux_pl + index_pl); // extract the second integer
 
                     index_pl = next_value((faux_pl + index_pl), 0);
 
                     move_payload_head(index_pl); // move payload head to the last char int the buffer
 
                     index_pl = 0;
-                    //index_comm ++;
+                    //queue_tail ++;
                 }
                 new_command--;
-                index_comm++;
+                queue_tail=(queue_tail+1)%MAX_COMMAND;
                 //print_buff_log();
-                //print_comm_log(command_1.x, command_1.t);
+                //print_comm_log(command_queue_1.x, command_queue_1.t);
                 append_responce(1);
                 
             } else {
                 /*for(int16_t i = 0; i<MAX_COMMAND; i++){
-                    print_comm_log(command[i].x, command[i].t);
+                    print_comm_log(command_queue[i].x, command_queue[i].t);
                 }
-                index_comm = 0; // only for debug
+                queue_tail = 0; // only for debug
                  */
                 append_responce(2);
                 discard_command();
@@ -186,13 +196,16 @@ int main(void) {
 
             
         }
-        if(!is_moving){
-            if(index_comm!=0){
-                    
+        if (!is_moving) {
+            if (get_queue_length(queue_head,queue_tail)>0) {
+                schedInfo[1].N = command_queue[ queue_head ].t; //set up the heartbeat duration
+                command_to_pwm(command_queue[queue_head].x); //start motors
+                queue_head = (queue_head+1) % MAX_COMMAND; //to account for wrap around
+                is_moving=1;
             }
         }
         
-        /*if(command_1[index_comm].t > 0){
+        /*if(command_1[queue_tail].t > 0){
             LATGbits.LATG9 = (!LATGbits.LATG9);
         }*/
             
@@ -223,15 +236,17 @@ void task_blink_led(void* param){
 }
 
 void task_battery_log(void *param){
-    break;
+   
 }
 
 void task_infraRed_log(void *param){
-    break;
+   
 }
 
 void task_move(void *param){
-    
+    int* is_moving = (int*) param;
+    pwm_stop();
+    is_moving=0;
 }
 
 void scheduler_setup(heartbeat schedInfo[]){
@@ -241,12 +256,46 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[0].f=&task_blink_led;
     schedInfo[0].params= (void*)(&is_waiting);
     schedInfo[0].enable=1;
+    //pwm scheduling
+    schedInfo[1].N=0;
+    schedInfo[1].n=0;
+    schedInfo[1].f=&task_move;
+    schedInfo[1].params=(void*)(&is_moving);
+    schedInfo[1].enable=1;
     
     // battery sensing and logging 
     
     
     
     // IR logging
+    
+    
+    
 }
 // -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
 // ---------------------------------------------------------------------------------------------------------------------------------- //
+
+void command_to_pwm(int cmd){
+    switch(cmd){
+        case 1:
+            pwm_forward();
+            break;
+        case 2:
+            pwm_backward();
+            break;
+        case 3:
+            pwm_clockwise();
+            break;
+        case 4:
+            pwm_counter_clockwise();
+    }
+}
+
+int get_queue_length(int head,int tail){
+    int length;
+    if (tail>=head)
+        length=tail-head;
+    else
+        length=MAX_COMMAND-head+tail;
+    return length;
+}

@@ -9,6 +9,7 @@
       <itemPath>parser.h</itemPath>
       <itemPath>scheduler.h</itemPath>
       <itemPath>adc.h</itemPath>
+      <itemPath>pwm.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -29,6 +30,7 @@
       <itemPath>parser.c</itemPath>
       <itemPath>scheduler.c</itemPath>
       <itemPath>adc.c</itemPath>
+      <itemPath>pwm.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
