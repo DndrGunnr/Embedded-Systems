@@ -15,12 +15,15 @@
 #include "string.h"
 #include "math.h"
 
+#define LV_CONV 1024
+#define VDD 3.3
+
 int16_t gl_index = 0;
 int16_t gl_toSendLen = 0;
 int16_t int_counter = 0;
 char gl_toSend[4];
-float lv_conv = 1024.0;
-float volt = 3.3;
+
+
 int16_t partitore = 3;
 int16_t ADCBAT;
 int16_t ADCIFR;
@@ -109,37 +112,34 @@ int main(void) {
     AD1CON1bits.ADON = 1;*/
     
     
-    AD1CON1bits.AD12B = 0;// set 10bit adc
+    //AD1CON1bits.AD12B = 0;// set 10bit adc
     
-    AD1CON3bits.ADCS = 63; // ADC conversion clock  - Tad = 5 * TCY
-    AD1CON3bits.SAMC = 31;// Auto sample time bits - 16 Tad
+    AD1CON3bits.ADCS = 8; // ADC conversion clock  - Tad = 5 * TCY
+    AD1CON3bits.SAMC = 16;// Auto sample time bits - 16 Tad
     
     AD1CON1bits.ASAM = 1; // Automatic sampling
     AD1CON1bits.SSRC = 7; // Automatic conversion
     
     AD1CON2bits.CSCNA = 1;// Scan mode activation
-    
     AD1CON2bits.CHPS = 0; // Channel number selection
-    AD1CHS0bits.CH0NA = 0;// Channel 0 negative input is VREFL
+    //AD1CHS0bits.CH0NA = 0;// Channel 0 negative input is VREFL
     
-    ANSELBbits.ANSB15 = 1;// analog pin mode selection
+    ANSELBbits.ANSB14 = 1;// analog pin mode selection
     ANSELBbits.ANSB11 = 1;// activate AN5 AN11
     
     // dal file di dave+annika
-    TRISBbits.TRISB11 = 1;
-    TRISBbits.TRISB15 = 1;
+    //TRISBbits.TRISB11 = 1;
+    //TRISBbits.TRISB15 = 1;
     
-    TRISAbits.TRISA9 = 0;//set ir enable 
-    LATAbits.LATA9 = 1;
+    TRISBbits.TRISB9 = 0;//set ir enable 
+    //LATAbits.LATA9 = 1;
     // dal file di dave+annika
 
-    AD1CSSLbits.CSS14 = 1;// insert AN5 AN11 in the scan sequence
     AD1CSSLbits.CSS11 = 1;
+    AD1CSSLbits.CSS14 = 1;// insert AN5 AN11 in the scan sequence
     
     AD1CON2bits.SMPI = 1;// n of sequential operation before interrupt (if sequential is set)
-    
-    
-    
+
     AD1CON1bits.ADON = 1;// ADC activation
     
     // debug led
@@ -150,8 +150,8 @@ int main(void) {
     uart_setup(1, 0, 0, 0);
     
     // setup timer
-    tmr_setup_period(TIMER1, 100);
-    IEC0bits.T1IE = 1;
+    //tmr_setup_period(TIMER1, 1000);
+    //IEC0bits.T1IE = 1;
     
     // local variables
     double QV_bat, TN_bat;
@@ -159,31 +159,34 @@ int main(void) {
     
     
     while(1){
-        if(send_data){
-            gl_index = 0;
-        
-            ADCBAT = ADC1BUF0;
-            ADCIFR = ADC1BUF1;
+        AD1CON1bits.DONE = 0;
+        while (!AD1CON1bits.DONE);
 
-            QV_bat = ADCBAT / lv_conv;
-            QV_ifr = ADCIFR / lv_conv;
+        gl_index = 0;
 
-            // conversione in volt
-            TN_bat = (QV_bat * volt) * partitore;
-            TN_ifr = QV_ifr * volt;
+        ADCBAT = ADC1BUF0;
+        ADCIFR = ADC1BUF1;
 
-            // conversione cm
-            CM_ifr = (2.34 - 4.74 * TN_ifr + 4.06 * pow(TN_ifr, 2) - 1.60 * pow(TN_ifr, 3) + 0.24 * pow(TN_ifr, 4))*100;
+        QV_bat = ((float)ADCBAT / LV_CONV)*VDD;
+        QV_ifr = ((float)ADCIFR / LV_CONV)*VDD;
 
-            sprintf(gl_toSend, "%f %f,", TN_bat, CM_ifr);
-            gl_toSendLen = strlen(gl_toSend);
-            if (gl_toSendLen > 0) {
-                LATGbits.LATG9 = (!LATGbits.LATG9);
-            }
+        // conversione in volt
+        TN_bat = (QV_bat) * partitore;
+        TN_ifr = QV_ifr;
 
-            IFS0bits.U1TXIF = 1;
-            send_data = 0;
+        // conversione cm
+        CM_ifr = (2.34 - 4.74 * TN_ifr + 4.06 * pow(TN_ifr, 2) - 1.60 * pow(TN_ifr, 3) + 0.24 * pow(TN_ifr, 4))*100;
+
+        sprintf(gl_toSend, "%f %f,", TN_bat, CM_ifr);
+        gl_toSendLen = strlen(gl_toSend);
+        if (gl_toSendLen > 0) {
+            LATGbits.LATG9 = (!LATGbits.LATG9);
         }
+
+        IFS0bits.U1TXIF = 1;
+        send_data = 0;
+        
+        tmr_wait_ms(TIMER1, 500);
     }
             
     return 0;

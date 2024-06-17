@@ -208,16 +208,26 @@ int main(void) {
 
             
         }
-        if (is_waiting == 0) {
+        if (is_waiting == 0) {   
             if (is_moving == 0) {
+                schedInfo[1].enable = 1;
+                
                 if (get_queue_length(buff) > 0) {
-                    schedInfo[1].N = command_queue[ buff.head ].t; //set up the heartbeat duration
+                    schedInfo[1].N = command_queue[ buff.head ].t; //set up the heartbeat period to stop pwm execution
                     command_to_pwm(command_queue[buff.head].x); //start motors
                     buff.head = (buff.head + 1) % MAX_COMMAND; //to account for wrap around
                     buff.is_full=0;
                     is_moving = 1;
                     LATGbits.LATG9=is_moving;
                 }
+            }
+        }else{
+            if (is_moving == 1){
+                /*task_move(&is_moving);
+                schedInfo[1].enable = 0;
+                schedInfo[1].n = 0;
+                 */
+                schedInfo[1].n = schedInfo[1].N;
             }
         }
         
@@ -273,12 +283,13 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[0].f=&task_blink_led;
     schedInfo[0].params= (void*)(&is_waiting);
     schedInfo[0].enable=1;
-    //pwm scheduling
+    
+    //pwm stop scheduling
     schedInfo[1].N=0;
     schedInfo[1].n=0;
     schedInfo[1].f=&task_move;
     schedInfo[1].params=(void*)(&is_moving);
-    schedInfo[1].enable=1;
+    schedInfo[1].enable=0;
     
     // battery sensing and logging 
     

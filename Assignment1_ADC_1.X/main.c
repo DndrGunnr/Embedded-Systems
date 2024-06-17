@@ -97,33 +97,35 @@ int main(void) {
     double TENValue;
     double BATValue;
     
-    tmr_setup_period(TIMER1, 400);
-    IEC0bits.T1IE = 1; // activate the timer interrupt
+    //tmr_setup_period(TIMER1, 2);
+    //IEC0bits.T1IE = 1; // activate the timer interrupt
 
     
     while(1){
-        if(gl_sampl == 1){
-            gl_index = 0;
-            gl_sampl = 0;
-            
-            AD1CON1bits.SAMP = 1; // Start sampling
-            tmr_wait_ms(TIMER2, 1);
-            AD1CON1bits.SAMP = 0; // Start the conversion
-            while (!AD1CON1bits.DONE); // Wait for the conversion to complete
-            ADCValue = ADC1BUF0;
-            
-            // conversione e invio
-            TENValue = ADCValue/lv_conv;
-            BATValue = (volt * TENValue)*partitore;
-            
-            sprintf(gl_toSend, "%.2f", BATValue);
-            gl_toSendLen = strlen(gl_toSend);
-            if(gl_toSendLen > 0){
-                LATGbits.LATG9 = (!LATGbits.LATG9);
-            }
-            
-            IFS0bits.U1TXIF = 1;
+
+        gl_index = 0;
+        gl_sampl = 0;
+
+        AD1CON1bits.SAMP = 1; // Start sampling
+        tmr_wait_ms(TIMER2, 1);
+        AD1CON1bits.SAMP = 0; // Start the conversion
+        while (!AD1CON1bits.DONE); // Wait for the conversion to complete
+        ADCValue = ADC1BUF0;
+
+        // conversione e invio
+        TENValue = ADCValue / lv_conv;
+        BATValue = (volt * TENValue) * partitore;
+
+        sprintf(gl_toSend, "%.2f", BATValue);
+        gl_toSendLen = strlen(gl_toSend);
+        if (gl_toSendLen > 0) {
+            LATGbits.LATG9 = (!LATGbits.LATG9);
         }
+
+        IFS0bits.U1TXIF = 1;
+        
+        
+        tmr_wait_ms(TIMER1, 400);
     }
             
     return 0;
