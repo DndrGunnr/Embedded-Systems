@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:Project_g9.X/.generated_files/flags/default/4c8f65cb9ddeab44232097355065244e208c0034
- -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"C:\Users\enric\OneDrive - unige.it\Documents\1_ES\Embedded-System\Project_g9.X\adc.c
-========
- -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"C:\Users\Family\Desktop\Embedded-System\Assignment6_ADC_3.X\timer.c
->>>>>>>> d7d880999751962c004de353c55da9a8df573139:Assignment6_ADC_3.X/.generated_files/flags/default/22db7447ea516d765d1dbc84696707651c9e4daf
