@@ -45,6 +45,12 @@
 #define IR        4
 #define MSG_END   5
 
+typedef struct{
+    int head;
+    int tail;
+    int is_full;
+}buffer;
+
 // set all UART mode, pin, interrupts ecc
 int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
 

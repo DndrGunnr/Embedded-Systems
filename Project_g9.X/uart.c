@@ -27,6 +27,7 @@ int16_t head_re = 0;
 int16_t tail_re = 0;
 
 
+
 int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, int RX_interrupt_type) {
     // UART SET UP
 
@@ -96,6 +97,7 @@ int16_t get_data_nuber(){
     int16_t temp = 0;
     temp = abs(tail_cm - head_cm);
     return temp;
+
 }
 
 void discard_command(){

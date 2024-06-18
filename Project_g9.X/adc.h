@@ -27,6 +27,7 @@
  */
 #define LV_CONV 1024.0
 #define VDD 3.3
+#define VOLT_DIVIDER 3
 
 typedef struct{
     double battery;
