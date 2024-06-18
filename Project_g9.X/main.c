@@ -12,6 +12,8 @@
 #include "scheduler.h"
 #include "parser.h"
 #include "pwm.h"
+#include "math.h"
+#include "adc.h"
 
 #define MAX_COMMAND 10
 
@@ -156,6 +158,8 @@ void setup(){
     uart_setup(1,0,1,0);
     //pwm setup
     pwm_setup();
+    //adc setup
+    adc_setup();
     
     TRISGbits.TRISG9 = 0;
 }
@@ -291,12 +295,31 @@ void task_blink_led(void* param){
     }
 }
 
+void task_adc_sensing(void *param){
+    AD1CON1bits.DONE = 0;
+    while(!AD1CON1bits.DONE);
+}
+
 void task_battery_log(void *param){
-   
+    int16_t adc_value = ADC1BUF0;
+    double ten_value = ((float)adc_value/LV_CONV)*VDD;
+            
+    double battery = ten_value * 3;
+    
+    append_responce(BATTERY);
+    append_number(battery, BATTERY);
+    append_responce(MSG_END);
 }
 
 void task_infraRed_log(void *param){
+   int16_t adc_value = ADC1BUF1;
+   double ten_value = ((float)adc_value/LV_CONV)*VDD;
    
+   double distance = (2.34 - 4.74 * ten_value + 4.06 * pow(ten_value, 2) - 1.60 * pow(ten_value, 3) + 0.24 * pow(ten_value, 4))*100;
+   
+   append_responce(IR);
+   append_number(distance, IR);
+   append_responce(MSG_END);
 }
 
 void task_move(void *param){
@@ -321,14 +344,23 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[1].params=(void*)(&is_moving);
     schedInfo[1].enable=0;
     
-    // battery sensing and logging 
-    
-    
+    // adc sensing
+    schedInfo[2].N=1;
+    schedInfo[2].n=0;
+    schedInfo[2].f=&task_adc_sensing;
+    schedInfo[2].enable=1;
     
     // IR logging
+    schedInfo[3].N=100;
+    schedInfo[3].n=-1;
+    schedInfo[3].f=&task_infraRed_log;
+    schedInfo[3].enable=1;
     
-    
-    
+    // battery logging 
+    schedInfo[4].N=1000;
+    schedInfo[4].n=-2;
+    schedInfo[4].f=&task_battery_log;
+    schedInfo[4].enable=1;
 }
 // -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
 // ---------------------------------------------------------------------------------------------------------------------------------- //

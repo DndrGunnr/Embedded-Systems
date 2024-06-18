@@ -3,7 +3,7 @@
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 
-#define MAX_TASKS 2
+#define MAX_TASKS 5
 
 typedef struct {
     int n;

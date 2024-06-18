@@ -15,6 +15,8 @@
 
 char command_good_str[AK_DIM] = "$MACK,1*";
 char command_bad_str[AK_DIM]  = "$MACK,0*";
+char battery_header[HD_DIM] = "$MBATT,";
+char ir_header[HD_DIM] = "$MDIST,";
 
 char payload_buffer[RX_DIM];
 int16_t head_pl = 0;
@@ -158,15 +160,14 @@ int16_t get_responce_head(){
 void move_payload_head(int16_t bytes){
     for(int16_t i = 0; i<bytes; i++){
         head_pl++;
-        if(head_pl > RX_DIM){
-            head_pl = 0;
-        }
+        head_pl = head_pl % RX_DIM;
     }
 }
 
 void move_responce_head(){
     head_re++;
-    if (head_re > TX_DIM) {
+    //head_re = head_re % TX_DIM;
+    if(head_re >= TX_DIM){
         head_re = 0;
     }
 }
@@ -187,10 +188,50 @@ void append_responce(int16_t type){
                 tail_re = tail_re % TX_DIM;
             }
             break;
+        case BATTERY:
+            for(int16_t i = 0; i<HD_DIM; i++){
+                responce_buffer[tail_re] = battery_header[i];
+                tail_re++;
+                tail_re = tail_re % TX_DIM;
+            }
+            break;
+        case IR:
+            for(int16_t i = 0; i<HD_DIM; i++){
+                responce_buffer[tail_re] = ir_header[i];
+                tail_re++;
+                tail_re = tail_re % TX_DIM;
+            }
+            break;
+        case MSG_END:
+            responce_buffer[tail_re] = '*';
+            tail_re++;
+            tail_re = tail_re % TX_DIM;
     }
     // kick start the communication
     IFS0bits.U1TXIF = 1;
 } 
+
+void append_number(double value, int16_t type){
+    char number[100];
+    int16_t i = 0;
+    switch(type){
+        case BATTERY: 
+            sprintf(number, "%.2f", value);
+            break;
+        case IR: 
+            sprintf(number, "%d", (int16_t)value);
+            break;
+    }
+    
+    while(number[i] != '\0'){
+        responce_buffer[tail_re] = number[i];
+        tail_re++;
+        tail_re = tail_re % TX_DIM;
+        
+        i++;
+    }
+    
+}
 
 
 

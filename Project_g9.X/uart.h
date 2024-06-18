@@ -38,8 +38,12 @@
 #define RX_DIM 200
 #define TX_DIM 200
 #define AK_DIM 8 
-#define COMM_GOOD 6
-#define COMM_BAD  7
+#define HD_DIM 7
+#define COMM_GOOD 1
+#define COMM_BAD  2
+#define BATTERY   3
+#define IR        4
+#define MSG_END   5
 
 // set all UART mode, pin, interrupts ecc
 int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
@@ -64,7 +68,7 @@ int16_t get_payload_head();
 int16_t get_responce_head();
 
 void append_responce(int16_t type);
-
+void append_number(double value, int16_t type);
 
 // --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
 void print_buff_log();

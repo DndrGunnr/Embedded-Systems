@@ -8,6 +8,8 @@
 
 #include "xc.h"
 #include "scheduler.h"
+#include "adc.h"
+#include "math.h"
 
 void scheduler(heartbeat schedInfo[], int nTasks) 
 {

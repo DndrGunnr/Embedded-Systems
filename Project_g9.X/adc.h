@@ -25,5 +25,7 @@
  * Comments:
  * Revision history: 
  */
+#define LV_CONV 1024.0
+#define VDD 3.3
 
 void adc_setup();
