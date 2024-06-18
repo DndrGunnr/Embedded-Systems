@@ -18,9 +18,9 @@ char command_bad_str[AK_DIM]  = "$MACK,0*";
 char battery_header[HD_DIM] = "$MBATT,";
 char ir_header[HD_DIM] = "$MDIST,";
 
-char payload_buffer[RX_DIM];
-int16_t head_pl = 0;
-int16_t tail_pl = 0;
+char command_buffer[RX_DIM];
+int16_t head_cm = 0;
+int16_t tail_cm = 0;
 
 char responce_buffer[TX_DIM];
 int16_t head_re = 0;
@@ -78,53 +78,75 @@ int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, 
     return 1;
 }
 
-int16_t save_payload(char *payload, int16_t payload_dim){
-    int16_t wrong_comm = 0;
-    
-    for(int16_t i = 0; i<payload_dim; i++){
-        if(payload[i] >= 48 && payload[i] <= 57){
-            payload_buffer[tail_pl] = payload[i];
-            tail_pl++;
-        }else{
-            switch (payload[i]) {
-                case ',': payload_buffer[tail_pl] = payload[i];
-                    tail_pl++;
-                    break; // go on
-                case '\0': payload_buffer[tail_pl] = payload[i];
-                    tail_pl++;
-                    break; // go on
-                default: wrong_comm = 1;
-                    break; // discard command
-            }
-        }  
-        tail_pl = tail_pl % RX_DIM;
-        // used to put tail to zero at the end of the buffer
-    }
-    
-    if(wrong_comm == 1){
-        //LATGbits.LATG9 = 1;
-        head_pl = tail_pl;
-        // cannot put tail = head to avoid mixing different commands
-        return 0;
-    }
-    
-    tail_pl ++;
-    // move tail to the next place to avoid overwriting the '\0' char, after error control
-    // to avoid waste buffer space
-    return 1;
+void save_char(char carattere){
+    command_buffer[tail_cm] = carattere;
+    tail_cm++;
+    tail_cm = tail_cm % RX_DIM;
 }
 
-int16_t payload_empty(){
+int16_t command_empty(){
     int16_t temp = 0;
-    if(tail_pl == head_pl){
+    if(head_cm == tail_cm){
         temp = 1;
     }
     return temp;
 }
 
-void discard_command(){
-    head_pl = tail_pl;
+int16_t get_data_nuber(){
+    int16_t temp = 0;
+    temp = abs(tail_cm - head_cm);
+    return temp;
 }
+
+void discard_command(){
+    head_cm = tail_cm;
+}
+
+char get_char(){
+    return command_buffer[head_cm];
+}
+
+void move_command_head(){
+    head_cm++;
+    if(head_cm >= TX_DIM){
+        head_cm = 0;
+    }
+}
+
+int16_t get_command_tail(){
+    return tail_cm;
+}
+
+int16_t parse_payload(char *payload, int16_t payload_dim){
+    int16_t wrong_comm = 0;
+    
+    for(int16_t i = 0; i<payload_dim; i++){
+        if(payload[i] >= 48 && payload[i] <= 57){
+            continue;
+        }else{
+            switch (payload[i]) {
+                case ',': 
+                    break; // go on
+                case '\0': 
+                    break; // go on
+                default: wrong_comm = 1;
+                    break; // discard command
+            }
+        }  
+    }
+    
+    if(wrong_comm == 1){
+        //LATGbits.LATG9 = 1;
+        head_cm = tail_cm;
+        // cannot put tail = head to avoid mixing different commands
+        return 0;
+    }
+    return 1;
+
+}
+
+
+
 
 int16_t responce_empty(){
     int16_t temp = 0;
@@ -134,34 +156,12 @@ int16_t responce_empty(){
     return temp;
 }
 
-/*
- int16_t responce_item(){
-    int16_t temp = 0;
-    return abs(tail_re - head_re);
-}
-*/
-
-char *get_payload(){
-    return payload_buffer;
-}
-
 char *get_responce(){
     return responce_buffer;
 }
 
-int16_t get_payload_head(){
-    return head_pl;
-}
-
 int16_t get_responce_head(){
     return head_re;
-}
-
-void move_payload_head(int16_t bytes){
-    for(int16_t i = 0; i<bytes; i++){
-        head_pl++;
-        head_pl = head_pl % RX_DIM;
-    }
 }
 
 void move_responce_head(){
@@ -238,7 +238,7 @@ void append_number(double value, int16_t type){
 // --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
 void print_buff_log(){
     char toSend[100];
-    sprintf(toSend, "%d %d,", head_pl, tail_pl);
+    sprintf(toSend, "%d %d,", head_cm, tail_cm);
     for(int16_t i = 0; i<strlen(toSend); i++){
         while (U1STAbits.UTXBF);
         U1TXREG = toSend[i];

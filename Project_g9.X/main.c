@@ -32,7 +32,8 @@ typedef struct{
 int16_t is_waiting = 1; //wait status
 int16_t is_moving = 0;
 
-int16_t new_command = 0;//notify command to be converted
+int16_t data_available = 0;//notify command to be converted
+int16_t new_command = 0;
 
 parser_state pstate;
 
@@ -64,49 +65,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
     IFS0bits.U1RXIF = 0;
     char new_char;
-    // after a char is recived, start the parsing
-    if (U1STAbits.OERR == 1) { // if a buffer overflow has occurred
-        U1STAbits.OERR = 0;    // reset overflow flag
-        while (U1STAbits.URXDA != 0){ // consume all the char in the RX buffer
-            new_char = U1RXREG;
-        }
-        //parser reset --> discard the last message in memory 
-        //we have lost at least one char so the message is not usable
-        pstate.state = STATE_DOLLAR;
-        pstate.index_type = 0;
-        pstate.index_payload = 0;
-        
-    } else {
-        while (U1STAbits.URXDA != 0) {
-            new_char = U1RXREG;
-            if (parse_byte(&pstate, new_char) == NEW_MESSAGE) {
-                //LATGbits.LATG9 = 1;
-
-                // se riceviamo un nuovo messaggio
-                // salviamo il payload in un buffer secondario
-                if (save_payload(pstate.msg_payload, pstate.index_payload))
-                    new_command++;
-                // attiviamo la conversione
-            }
-        }
-    }
     
-    
-    /*if(U1STAbits.OERR == 1){
-        LATGbits.LATG9 = 1;
-    }
-    while (U1STAbits.URXDA != 0) {
+    while(U1STAbits.URXDA != 0){
         new_char = U1RXREG;
-        if (parse_byte(&pstate, new_char) == NEW_MESSAGE) {
-            //LATGbits.LATG9 = 1;
-
-            // se riceviamo un nuovo messaggio
-            // salviamo il payload in un buffer secondario
-            if (save_payload(pstate.msg_payload, pstate.index_payload))
-                new_command++;
-            // attiviamo la conversione
-        }
-    }*/
+        save_char(new_char);
+    }
+    
+    data_available = 1;
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1TXInterrupt(){
@@ -177,7 +142,7 @@ int main(void) {
     
     // variables for command conversion
     char *faux_pl;
-    int16_t index_pl = 0;
+    int16_t index_cm = 0;
     
     // command
     move command_queue[MAX_COMMAND];
@@ -190,82 +155,64 @@ int main(void) {
     
     while(1){
         scheduler(schedInfo, MAX_TASKS);
-        if(new_command > 0){
-            
-            
-            if (buff.is_full == 0) {
-                //LATGbits.LATG9 = 1;
-                //print_buff_log();
-                if (payload_empty() == 0) {
-                    faux_pl = get_payload() + get_payload_head(); // retrive the poiter to the payload buffer
-                    // I want the position to the first char of the current command
-
-                    command_queue[buff.tail].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
-                    // does not modify the indexes
-
-                    index_pl = next_value(faux_pl, 0); // get the index to the start of the next integer
-                    // next value cycles trought the vector(first arg), from the position of the index(second arg)
-
-                    move_payload_head(index_pl); // move payload head index of index_pl places
-
-                    command_queue[buff.tail].t = extract_integer(faux_pl + index_pl); // extract the second integer
-
-                    index_pl = next_value((faux_pl + index_pl), 0);
-
-                    move_payload_head(index_pl); // move payload head to the last char int the buffer
-
-                    index_pl = 0;
-                    //queue_tail ++;
-                }
-                new_command--;
-                buff.tail = (buff.tail + 1) % MAX_COMMAND;
-                if (buff.tail == buff.head)
-                    buff.is_full=1;
-                //print_buff_log();
-                //print_comm_log(command_queue_1.x, command_queue_1.t);
-                append_responce(COMM_GOOD);
-                
-            } else {
-                /*for(int16_t i = 0; i<MAX_COMMAND; i++){
-                    print_comm_log(command_queue[i].x, command_queue[i].t);
-                }
-                queue_tail = 0; // only for debug
-                 */
-                append_responce(COMM_BAD);
-                discard_command();
-                if(payload_empty()){
+        if(data_available == 1){
+            for(int16_t i = 0; i<get_data_nuber(); i++){
+                if(parse_byte(&pstate, get_char()) == NEW_MESSAGE){
                     //LATGbits.LATG9 = (!LATGbits.LATG9);
-                }
-                
-                new_command--;
-            }
+                    if(buff.is_full == 0){
+                        if(parse_payload(pstate.msg_payload, pstate.index_payload)){
+                            //LATGbits.LATG9 = (!LATGbits.LATG9);
+                            faux_pl = pstate.msg_payload; // retrive the poiter to the payload buffer
+                            // I want the position to the first char of the current command
 
-            
-        }
-        if (is_waiting == 0) {   
-            if (is_moving == 0) {
-                schedInfo[1].enable = 1;
-                
-                if (get_queue_length(buff) > 0) {
-                    schedInfo[1].N = command_queue[ buff.head ].t; //set up the heartbeat period to stop pwm execution
-                    command_to_pwm(command_queue[buff.head].x); //start motors
-                    buff.head = (buff.head + 1) % MAX_COMMAND; //to account for wrap around
-                    buff.is_full=0;
-                    is_moving = 1;
-                    //LATGbits.LATG9=is_moving;
+                            command_queue[buff.tail].x = extract_integer(faux_pl); // send the extract integer with the payload buffer
+                            // does not modify the indexes
+
+                            index_cm = next_value(faux_pl, 0); // get the index to the start of the next integer
+                            // next value cycles trought the vector(first arg), from the position of the index(second arg)
+
+                            command_queue[buff.tail].t = extract_integer(faux_pl + index_cm); // extract the second integer
+
+                            index_cm = next_value((faux_pl + index_cm), 0);
+
+                            index_cm = 0;
+                        }
+                        
+                        buff.tail = (buff.tail + 1) % MAX_COMMAND;
+                        if (buff.tail == buff.head)
+                            buff.is_full = 1;
+                        
+                        //print_buff_log();
+                        //print_comm_log(command_queue_1.x, command_queue_1.t);
+                        //append_responce(COMM_GOOD);
+                    }else{
+                        //'append_responce(COMM_BAD);
+                        discard_command();
+                        for (int16_t i = 0; i < MAX_COMMAND; i++) {
+                            print_comm_log(command_queue[i].x, command_queue[i].t);
+                        }
+                    }
                 }
-            }
-        }else{
-            if (is_moving == 1){
-                /*task_move(&is_moving);
-                schedInfo[1].enable = 0;
-                schedInfo[1].n = 0;
-                 */
-                schedInfo[1].n = schedInfo[1].N;
+                
+                
+                //if(command_empty() == 1)
+                    //break;
+                if (command_empty()) {
+                    //LATGbits.LATG9 = (!LATGbits.LATG9);
+                    data_available = 0;
+                }else{
+                    move_command_head();
+                }
+                //print_buff_log();
             }
         }
+      
         
-        /*if(command_1[queue_tail].t > 0){
+        /*for(int16_t i = 0; i<buff.tail; i++){
+            print_comm_log(command_queue[i].x,command_queue[i].t);
+        }
+         * 
+         * if(command_1[queue_tail].t > 0){
             LATGbits.LATG9 = (!LATGbits.LATG9);
         }*/
             
@@ -354,13 +301,13 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[3].N=100;
     schedInfo[3].n=-1;
     schedInfo[3].f=&task_infraRed_log;
-    schedInfo[3].enable=1;
+    schedInfo[3].enable=0;
     
     // battery logging 
     schedInfo[4].N=1000;
     schedInfo[4].n=-2;
     schedInfo[4].f=&task_battery_log;
-    schedInfo[4].enable=1;
+    schedInfo[4].enable=0;
 }
 // -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
 // ---------------------------------------------------------------------------------------------------------------------------------- //
