@@ -35,6 +35,8 @@ int16_t is_moving = 0;
 int16_t data_available = 0;//notify command to be converted
 int16_t new_command = 0;
 
+int fake_ir=0;
+
 mesurements adc_value;
 
 parser_state pstate;
@@ -211,7 +213,9 @@ int main(void) {
             }
         }
         
-        if (is_waiting == 0) {   
+        if (is_waiting == 0) {
+            fake_ir++;
+            
             if (is_moving == 0) {
                 schedInfo[1].enable = 1;
                 
@@ -271,35 +275,46 @@ void task_blink_led(void* param){
 
 void task_adc_sensing(void *param){
     mesurements* measure = (mesurements*) param;
-    
+    int16_t adc_batt; //raw battery value
+    int16_t adc_ir; //raw ir value
     AD1CON1bits.DONE = 0;
     while(!AD1CON1bits.DONE);
+    adc_batt = ADC1BUF0;
+    adc_ir = ADC1BUF1;
     
-    measure->battery = ADC1BUF0;
-    measure->ir = ADC1BUF1;
+    
+    
+    measure->battery = (((float)adc_batt/LV_CONV)*VDD)*VOLT_DIVIDER;
+    measure->ir = (2.34 - 4.74 * ((float)adc_ir/LV_CONV)*VDD + 4.06 * pow(((float)adc_ir/LV_CONV)*VDD, 2) 
+                    - 1.60 * pow(((float)adc_ir/LV_CONV)*VDD, 3) + 0.24 * pow(((float)adc_ir/LV_CONV)*VDD, 4))*100;
+    
+    if (measure->ir<=20){
+        pwm_stop();
+        fake_ir=0;
+    }
 }
 
 void task_battery_log(void *param){
-    double* adc_val = (double*) param;
+    double* battery = (double*) param;
     
-    double ten_value = ((float)*adc_val/LV_CONV)*VDD;
+    //double ten_value = ((float)*adc_val/LV_CONV)*VDD;
             
-    double battery = ten_value * 3;
+    //double battery = ten_value * 3;
     
     append_responce(BATTERY);
-    append_number(battery, BATTERY);
+    append_number(*battery, BATTERY);
     append_responce(MSG_END);
 }
 
 void task_infraRed_log(void *param){
-   double* adc_val = (double*) param;
+   double* distance = (double*) param;
    
-   double ten_value = ((float)*adc_val/LV_CONV)*VDD;
+   //double ten_value = ((float)*adc_val/LV_CONV)*VDD;
    
-   double distance = (2.34 - 4.74 * ten_value + 4.06 * pow(ten_value, 2) - 1.60 * pow(ten_value, 3) + 0.24 * pow(ten_value, 4))*100;
+   //double distance = (2.34 - 4.74 * ten_value + 4.06 * pow(ten_value, 2) - 1.60 * pow(ten_value, 3) + 0.24 * pow(ten_value, 4))*100;
    
    append_responce(IR);
-   append_number(distance, IR);
+   append_number(*distance, IR);
    append_responce(MSG_END);
 }
 
