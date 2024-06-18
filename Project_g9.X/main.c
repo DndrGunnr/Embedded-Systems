@@ -35,6 +35,8 @@ int16_t is_moving = 0;
 int16_t data_available = 0;//notify command to be converted
 int16_t new_command = 0;
 
+mesurements adc_value;
+
 parser_state pstate;
 
 void task_blink_led(void* param);
@@ -151,6 +153,8 @@ int main(void) {
     buff.tail=0;
     buff.is_full=0;
     //state
+    
+    
 
     
     while(1){
@@ -184,13 +188,13 @@ int main(void) {
                         
                         //print_buff_log();
                         //print_comm_log(command_queue_1.x, command_queue_1.t);
-                        //append_responce(COMM_GOOD);
+                        append_responce(COMM_GOOD);
                     }else{
-                        //'append_responce(COMM_BAD);
+                        append_responce(COMM_BAD);
                         discard_command();
-                        for (int16_t i = 0; i < MAX_COMMAND; i++) {
+                        /*for (int16_t i = 0; i < MAX_COMMAND; i++) {
                             print_comm_log(command_queue[i].x, command_queue[i].t);
-                        }
+                        }*/
                     }
                 }
                 
@@ -204,6 +208,29 @@ int main(void) {
                     move_command_head();
                 }
                 //print_buff_log();
+            }
+        }
+        
+        if (is_waiting == 0) {   
+            if (is_moving == 0) {
+                schedInfo[1].enable = 1;
+                
+                if (get_queue_length(buff) > 0) {
+                    schedInfo[1].N = command_queue[ buff.head ].t; //set up the heartbeat period to stop pwm execution
+                    command_to_pwm(command_queue[buff.head].x); //start motors
+                    buff.head = (buff.head + 1) % MAX_COMMAND; //to account for wrap around
+                    buff.is_full=0;
+                    is_moving = 1;
+                    //LATGbits.LATG9=is_moving;
+                }
+            }
+        }else{
+            if (is_moving == 1){
+                /*task_move(&is_moving);
+                schedInfo[1].enable = 0;
+                schedInfo[1].n = 0;
+                 */
+                schedInfo[1].n = schedInfo[1].N;
             }
         }
       
@@ -243,13 +270,19 @@ void task_blink_led(void* param){
 }
 
 void task_adc_sensing(void *param){
+    mesurements* measure = (mesurements*) param;
+    
     AD1CON1bits.DONE = 0;
     while(!AD1CON1bits.DONE);
+    
+    measure->battery = ADC1BUF0;
+    measure->ir = ADC1BUF1;
 }
 
 void task_battery_log(void *param){
-    int16_t adc_value = ADC1BUF0;
-    double ten_value = ((float)adc_value/LV_CONV)*VDD;
+    double* adc_val = (double*) param;
+    
+    double ten_value = ((float)*adc_val/LV_CONV)*VDD;
             
     double battery = ten_value * 3;
     
@@ -259,8 +292,9 @@ void task_battery_log(void *param){
 }
 
 void task_infraRed_log(void *param){
-   int16_t adc_value = ADC1BUF1;
-   double ten_value = ((float)adc_value/LV_CONV)*VDD;
+   double* adc_val = (double*) param;
+   
+   double ten_value = ((float)*adc_val/LV_CONV)*VDD;
    
    double distance = (2.34 - 4.74 * ten_value + 4.06 * pow(ten_value, 2) - 1.60 * pow(ten_value, 3) + 0.24 * pow(ten_value, 4))*100;
    
@@ -295,19 +329,22 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[2].N=1;
     schedInfo[2].n=0;
     schedInfo[2].f=&task_adc_sensing;
+    schedInfo[2].params=(void*)(&adc_value);
     schedInfo[2].enable=1;
     
     // IR logging
     schedInfo[3].N=100;
     schedInfo[3].n=-1;
     schedInfo[3].f=&task_infraRed_log;
-    schedInfo[3].enable=0;
-    
+    schedInfo[3].params=(void*)(&(adc_value.ir));
+    schedInfo[3].enable=1;
+   
     // battery logging 
     schedInfo[4].N=1000;
     schedInfo[4].n=-2;
     schedInfo[4].f=&task_battery_log;
-    schedInfo[4].enable=0;
+    schedInfo[4].params=(void*)(&(adc_value.battery));
+    schedInfo[4].enable=1;
 }
 // -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
 // ---------------------------------------------------------------------------------------------------------------------------------- //
