@@ -43,7 +43,6 @@ void command_to_pwm(int);
 int get_queue_length(buffer buff);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
-    
     IFS1bits.INT1IF = 0;            // Reset button flag
     IEC1bits.INT1IE = 0;            // Disable button
     IEC0bits.T1IE = 1;              // Enable T2 interrupt
@@ -51,7 +50,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _INT1Interrupt(){
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(){
-    
     IFS0bits.T1IF = 0;     
     T1CONbits.TON = 0;      // Stop the timer
     IFS1bits.INT1IF = 0;    // Reset button flag
@@ -65,15 +63,17 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
     IFS0bits.U1RXIF = 0;
     char new_char;
     // after a char is recived, start the parsing
-    new_char = U1RXREG;
-    if(parse_byte(&pstate, new_char) == NEW_MESSAGE){
-        //LATGbits.LATG9 = 1;
-        
-        // se riceviamo un nuovo messaggio
-        // salviamo il payload in un buffer secondario
-        if(save_payload(pstate.msg_payload, pstate.index_payload))
-            new_command++;
-        // attiviamo la conversione
+    while(U1STAbits.URXDA != 0){
+        new_char = U1RXREG;
+        if (parse_byte(&pstate, new_char) == NEW_MESSAGE) {
+            //LATGbits.LATG9 = 1;
+
+            // se riceviamo un nuovo messaggio
+            // salviamo il payload in un buffer secondario
+            if (save_payload(pstate.msg_payload, pstate.index_payload))
+                new_command++;
+            // attiviamo la conversione
+        }
     }
 }
 
@@ -189,7 +189,7 @@ int main(void) {
                     buff.is_full=1;
                 //print_buff_log();
                 //print_comm_log(command_queue_1.x, command_queue_1.t);
-                append_responce(1);
+                append_responce(COMM_GOOD);
                 
             } else {
                 /*for(int16_t i = 0; i<MAX_COMMAND; i++){
@@ -197,7 +197,7 @@ int main(void) {
                 }
                 queue_tail = 0; // only for debug
                  */
-                append_responce(2);
+                append_responce(COMM_BAD);
                 discard_command();
                 if(payload_empty()){
                     LATGbits.LATG9 = (!LATGbits.LATG9);

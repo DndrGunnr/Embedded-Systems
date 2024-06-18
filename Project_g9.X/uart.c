@@ -173,14 +173,14 @@ void move_responce_head(){
   
 void append_responce(int16_t type){
     switch(type){
-        case 1:
+        case COMM_GOOD:
             for(int16_t i = 0; i<AK_DIM; i++){
                 responce_buffer[tail_re] = command_good_str[i];
                 tail_re++;
                 tail_re = tail_re % TX_DIM;
             }
             break;
-        case 2:
+        case COMM_BAD:
             for(int16_t i = 0; i<AK_DIM; i++){
                 responce_buffer[tail_re] = command_bad_str[i];
                 tail_re++;
