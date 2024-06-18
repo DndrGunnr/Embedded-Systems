@@ -76,9 +76,10 @@ void tmr_setup_period(int timer, int ms){
             T2CONbits.TCKPS = prescaler_bits; // set all the bits to 1
             
             PR1 = (FCY / tmr_convert_prescaler(prescaler_bits))*(ms/1000.0); 
-            
+
+            TMR2=0;
             T2CONbits.TON = 1; // start the timer
-            IFS0bits.T2IF = 0; // flag to zero 
+            IFS0bits.T2IF = 0; // flag to zero            
             break;
             
         case 3:
@@ -173,7 +174,7 @@ int tmr_wait_period_busy(int timer){
         case 2:
             ret_val = IFS0bits.T2IF;    // save flag value before reset
             while(IFS0bits.T2IF != 1);
-            //IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
+            IFS0bits.T2IF = 0;          // set flag bit to 0 --> flag goes to one when timer expire
             TMR2 = 0;                   // reset the timer and start watching the flag
 
             break;
