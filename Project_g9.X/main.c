@@ -63,7 +63,37 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
     IFS0bits.U1RXIF = 0;
     char new_char;
     // after a char is recived, start the parsing
-    while(U1STAbits.URXDA != 0){
+    if (U1STAbits.OERR == 1) { // if a buffer overflow has occurred
+        U1STAbits.OERR = 0;    // reset overflow flag
+        while (U1STAbits.URXDA != 0){ // consume all the char in the RX buffer
+            new_char = U1RXREG;
+        }
+        //parser reset --> discard the last message in memory 
+        //we have lost at least one char so the message is not usable
+        pstate.state = STATE_DOLLAR;
+        pstate.index_type = 0;
+        pstate.index_payload = 0;
+        
+    } else {
+        while (U1STAbits.URXDA != 0) {
+            new_char = U1RXREG;
+            if (parse_byte(&pstate, new_char) == NEW_MESSAGE) {
+                //LATGbits.LATG9 = 1;
+
+                // se riceviamo un nuovo messaggio
+                // salviamo il payload in un buffer secondario
+                if (save_payload(pstate.msg_payload, pstate.index_payload))
+                    new_command++;
+                // attiviamo la conversione
+            }
+        }
+    }
+    
+    
+    /*if(U1STAbits.OERR == 1){
+        LATGbits.LATG9 = 1;
+    }
+    while (U1STAbits.URXDA != 0) {
         new_char = U1RXREG;
         if (parse_byte(&pstate, new_char) == NEW_MESSAGE) {
             //LATGbits.LATG9 = 1;
@@ -74,7 +104,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(){
                 new_command++;
             // attiviamo la conversione
         }
-    }
+    }*/
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1TXInterrupt(){
@@ -200,7 +230,7 @@ int main(void) {
                 append_responce(COMM_BAD);
                 discard_command();
                 if(payload_empty()){
-                    LATGbits.LATG9 = (!LATGbits.LATG9);
+                    //LATGbits.LATG9 = (!LATGbits.LATG9);
                 }
                 
                 new_command--;
@@ -218,7 +248,7 @@ int main(void) {
                     buff.head = (buff.head + 1) % MAX_COMMAND; //to account for wrap around
                     buff.is_full=0;
                     is_moving = 1;
-                    LATGbits.LATG9=is_moving;
+                    //LATGbits.LATG9=is_moving;
                 }
             }
         }else{
@@ -273,7 +303,7 @@ void task_move(void *param){
     int* is_moving = (int*) param;
     pwm_stop();
     *is_moving=0;
-    LATGbits.LATG9=*is_moving;
+    //LATGbits.LATG9=*is_moving;
 }
 
 void scheduler_setup(heartbeat schedInfo[]){
