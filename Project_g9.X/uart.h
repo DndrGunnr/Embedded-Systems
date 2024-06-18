@@ -48,27 +48,29 @@
 // set all UART mode, pin, interrupts ecc
 int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
 
-// save the paiload
-int16_t save_payload(char *payload, int16_t payload_dim);
+void save_char(char carattere);
+
+int16_t command_empty();
 
 void discard_command();
 
-int16_t payload_empty();
-int16_t responce_empty();
+char get_char();
 
-//int16_t responce_item();
+void move_command_head();
 
-void move_payload_head(int16_t bytes);
-void move_responce_head();
+int16_t parse_payload(char *payload, int16_t payload_dim);
 
-char *get_payload();
-char *get_responce();
+int16_t get_command_tail();
 
-int16_t get_payload_head();
-int16_t get_responce_head();
+int16_t get_data_nuber();
 
 void append_responce(int16_t type);
 void append_number(double value, int16_t type);
+
+int16_t get_responce_head();
+char *get_responce();
+void move_responce_head();
+int16_t responce_empty();
 
 // --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
 void print_buff_log();
