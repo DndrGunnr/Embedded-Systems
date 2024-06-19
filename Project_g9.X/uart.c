@@ -18,13 +18,11 @@ char command_bad_str[AK_DIM]  = "$MACK,0*";
 char battery_header[HD_DIM] = "$MBATT,";
 char ir_header[HD_DIM] = "$MDIST,";
 
-char command_buffer[RX_DIM];
-int16_t head_cm = 0;
-int16_t tail_cm = 0;
+char rx_buffer[RX_DIM];
+char tx_buffer[TX_DIM];
+buffer rx_buffer_idx;
+buffer tx_buffer_idx;
 
-char responce_buffer[TX_DIM];
-int16_t head_re = 0;
-int16_t tail_re = 0;
 
 
 
@@ -75,48 +73,62 @@ int uart_setup(int TX_interrupt_on, int TX_interrupt_type, int RX_interrupt_on, 
             default:IEC0bits.U1RXIE = 0;break;
         }
     }
+    buffer_init(&rx_buffer_idx);
+    buffer_init(&tx_buffer_idx);
 
     return 1;
 }
 
 void save_char(char carattere){
-    command_buffer[tail_cm] = carattere;
-    tail_cm++;
-    tail_cm = tail_cm % RX_DIM;
+    rx_buffer[rx_buffer_idx.tail] = carattere;
+    rx_buffer_idx.tail++;
+    if(rx_buffer_idx.tail >= RX_DIM){
+        rx_buffer_idx.tail = 0;
+    }
+    if (rx_buffer_idx.tail == rx_buffer_idx.head)
+        rx_buffer_idx.is_full = 1;
 }
 
-int16_t command_empty(){
+int16_t buffer_empty(int mode){
     int16_t temp = 0;
-    if(head_cm == tail_cm){
-        temp = 1;
+    switch(mode){
+        case RX:
+            if(rx_buffer_idx.head == rx_buffer_idx.tail && rx_buffer_idx.is_full == 0)
+                temp = 1;
+            break;
+        default:
+            if(tx_buffer_idx.head == tx_buffer_idx.tail && tx_buffer_idx.is_full == 0)
+                temp = 1;
     }
     return temp;
 }
 
-int16_t get_data_nuber(){
-    int16_t temp = 0;
-    temp = abs(tail_cm - head_cm);
-    return temp;
+int16_t get_buffer_length(buffer* buff){
+    int length;
+    //if the function is called without providing the argument, it is assumed the buffer can be retrieved
+    //from the global scope of uart.c
+    /*if (buff == NULL)
+        buff=&rx_buffer_idx;*/
 
+    if (buff->tail > buff->head)
+        length = buff->tail - buff->head;
+    else if (buff->tail == buff->head)
+        if (buff->is_full == 0)
+            length = 0;
+        else
+            length = MAX_COMMAND;
+    else
+        length = MAX_COMMAND - buff->head + buff->tail;
+    return length;
 }
 
 void discard_command(){
-    head_cm = tail_cm;
+    rx_buffer_idx.head = rx_buffer_idx.tail;
+    rx_buffer_idx.is_full=0;
 }
 
 char get_char(){
-    return command_buffer[head_cm];
-}
-
-void move_command_head(){
-    head_cm++;
-    if(head_cm >= TX_DIM){
-        head_cm = 0;
-    }
-}
-
-int16_t get_command_tail(){
-    return tail_cm;
+    return rx_buffer[rx_buffer_idx.head];
 }
 
 int16_t parse_payload(char *payload, int16_t payload_dim){
@@ -138,8 +150,8 @@ int16_t parse_payload(char *payload, int16_t payload_dim){
     }
     
     if(wrong_comm == 1){
-        //LATGbits.LATG9 = 1;
-        head_cm = tail_cm;
+
+        discard_command();
         // cannot put tail = head to avoid mixing different commands
         return 0;
     }
@@ -148,66 +160,93 @@ int16_t parse_payload(char *payload, int16_t payload_dim){
 }
 
 
-
-
-int16_t responce_empty(){
-    int16_t temp = 0;
-    if(tail_re == head_re){
-        temp = 1;
-    }
+char* get_buffer(int mode){
+    char* temp;
+    switch(mode){
+        case RX:
+            temp = rx_buffer;
+            break;
+        default:
+            temp = tx_buffer;
+    }                 
     return temp;
 }
 
-char *get_responce(){
-    return responce_buffer;
+int16_t get_buffer_head(int mode){
+    int16_t temp;
+    switch(mode){
+        case RX:
+            temp = rx_buffer_idx.head;
+            break;
+        default:
+            temp = tx_buffer_idx.head;
+    }  
+    return temp;
 }
 
-int16_t get_responce_head(){
-    return head_re;
-}
-
-void move_responce_head(){
-    head_re++;
-    //head_re = head_re % TX_DIM;
-    if(head_re >= TX_DIM){
-        head_re = 0;
-    }
+void move_buffer_head(int mode) {
+    switch (mode) {
+        case RX:
+            rx_buffer_idx.head++;
+            rx_buffer_idx.is_full=0;
+            if(rx_buffer_idx.head >= RX_DIM){
+                rx_buffer_idx.head = 0;
+            }
+            break;
+        default:
+            tx_buffer_idx.head++;
+            tx_buffer_idx.is_full=0;
+            if(tx_buffer_idx.head >= TX_DIM){
+                tx_buffer_idx.head = 0;
+            }
+    }  
 }
   
 void append_responce(int16_t type){
     switch(type){
         case COMM_GOOD:
             for(int16_t i = 0; i<AK_DIM; i++){
-                responce_buffer[tail_re] = command_good_str[i];
-                tail_re++;
-                tail_re = tail_re % TX_DIM;
+                tx_buffer[tx_buffer_idx.tail] = command_good_str[i];
+                tx_buffer_idx.tail++;
+                tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+                if (tx_buffer_idx.tail == tx_buffer_idx.head)
+                    tx_buffer_idx.is_full = 1;
+                
             }
             break;
         case COMM_BAD:
             for(int16_t i = 0; i<AK_DIM; i++){
-                responce_buffer[tail_re] = command_bad_str[i];
-                tail_re++;
-                tail_re = tail_re % TX_DIM;
+                tx_buffer[tx_buffer_idx.tail] = command_bad_str[i];
+                tx_buffer_idx.tail++;
+                tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+                if (tx_buffer_idx.tail == tx_buffer_idx.head)
+                    tx_buffer_idx.is_full = 1;                
             }
             break;
         case BATTERY:
             for(int16_t i = 0; i<HD_DIM; i++){
-                responce_buffer[tail_re] = battery_header[i];
-                tail_re++;
-                tail_re = tail_re % TX_DIM;
+                tx_buffer[tx_buffer_idx.tail] = battery_header[i];
+                tx_buffer_idx.tail++;
+                tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+                if (tx_buffer_idx.tail == tx_buffer_idx.head)
+                    tx_buffer_idx.is_full = 1;                
             }
             break;
         case IR:
             for(int16_t i = 0; i<HD_DIM; i++){
-                responce_buffer[tail_re] = ir_header[i];
-                tail_re++;
-                tail_re = tail_re % TX_DIM;
+                tx_buffer[tx_buffer_idx.tail] = ir_header[i];
+                tx_buffer_idx.tail++;
+                tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+                if (tx_buffer_idx.tail == tx_buffer_idx.head)
+                    tx_buffer_idx.is_full = 1;                
             }
             break;
         case MSG_END:
-            responce_buffer[tail_re] = '*';
-            tail_re++;
-            tail_re = tail_re % TX_DIM;
+            tx_buffer[tx_buffer_idx.tail] = '*';
+            tx_buffer_idx.tail++;
+            tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+            if (tx_buffer_idx.tail == tx_buffer_idx.head)
+                tx_buffer_idx.is_full = 1;            
     }
     // kick start the communication
     IFS0bits.U1TXIF = 1;
@@ -226,32 +265,39 @@ void append_number(double value, int16_t type){
     }
     
     while(number[i] != '\0'){
-        responce_buffer[tail_re] = number[i];
-        tail_re++;
-        tail_re = tail_re % TX_DIM;
+        tx_buffer[tx_buffer_idx.tail] = number[i];
+        tx_buffer_idx.tail++;
+        tx_buffer_idx.tail = tx_buffer_idx.tail % TX_DIM;
+        if (tx_buffer_idx.tail == tx_buffer_idx.head)
+            tx_buffer_idx.is_full = 1;        
         
         i++;
     }
     
 }
 
+void buffer_init(buffer* buff){
+    buff->head = 0;
+    buff->tail = 0;
+    buff->is_full = 0;
+}
 
 
-// --------------------------------------------------------------- DEBUG MOMENTANEO ---------------------------------------------------------------//
-void print_buff_log(){
+void print_buff_log(int mode){
     char toSend[100];
-    sprintf(toSend, "%d %d,", head_cm, tail_cm);
+    switch(mode){
+        case RX:sprintf(toSend, "%d %d,", rx_buffer_idx.head, rx_buffer_idx.tail);break;
+        default:sprintf(toSend, "%d %d,", tx_buffer_idx.head, tx_buffer_idx.tail); 
+    }
     for(int16_t i = 0; i<strlen(toSend); i++){
         while (U1STAbits.UTXBF);
         U1TXREG = toSend[i];
     }
 }
 
-void print_comm_log(int16_t x, int16_t t){
-    char toSend[100];
-    sprintf(toSend, "%d %d,", x, t);
-    for(int16_t i = 0; i<strlen(toSend); i++){
-        while (U1STAbits.UTXBF);
-        U1TXREG = toSend[i];
-    }
+int16_t get_data_nuber(){
+    int16_t temp = 0;
+    temp = abs(rx_buffer_idx.tail - rx_buffer_idx.head);
+    return temp;
 }
+
