@@ -64,7 +64,7 @@ int extract_integer(const char* str) {
 		i++;
 	}
 	while (str[i] != ',' && str[i] != '\0') {
-		number *= 10; // multiply the current number by 10;
+		number *= 10; // multiply the current number by 10
 		number += str[i] - '0'; // converting character to decimal number
 		i++;
 	}
@@ -73,8 +73,8 @@ int extract_integer(const char* str) {
 
 int next_value(const char* msg, int i) {
 	while (msg[i] != ',' && msg[i] != '\0') { i++; }
-	//if (msg[i] == ',')
-    i++;
+	if (msg[i] == ',') 
+        i++;
 	return i;
 }
 

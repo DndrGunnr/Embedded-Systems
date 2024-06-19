@@ -36,7 +36,7 @@ parser_state pstate;  //Instance of parser struct
 void task_blink_led(void* param);
 void task_battery_log(void *param);
 void task_infraRed_log(void *param);
-void task_move(void* param);
+void task_stop(void* param);
 void scheduler_setup(heartbeat schedInfo[]);
 void command_to_pwm(int);
 
@@ -115,9 +115,7 @@ void setup(){
     
     //ADC setup
     adc_setup();
-    
-    //Led useful for debug
-    //TRISGbits.TRISG9 = 0;
+   
 }
 
 int main(void) {
@@ -144,7 +142,7 @@ int main(void) {
     while(1){
         scheduler(schedInfo, MAX_TASKS); //Execute the tasks
         if(data_available == 1){
-            for(int16_t i = 0; i<get_data_nuber() ; i++){
+            for(int16_t i = 0; i<get_data_count() ; i++){
                 if(parse_byte(&pstate, get_char()) == NEW_MESSAGE){
                     if(cmd_queue_idx.is_full == 0){
                         if(parse_payload(pstate.msg_payload, pstate.index_payload)){
@@ -164,6 +162,7 @@ int main(void) {
                             index_cm = 0;
                             
                             cmd_queue_idx.tail = (cmd_queue_idx.tail + 1) % MAX_COMMAND;
+                            //if after incremenmting the tail, it corresponds to the head (happens after wrap around), then the buffer is full
                             if (cmd_queue_idx.tail == cmd_queue_idx.head)
                                 cmd_queue_idx.is_full = 1;
 
@@ -200,6 +199,7 @@ int main(void) {
                 }
             }
         }else{
+            //useful when execution is suspended with button. This forces scheduler to terminate current task
             if (is_moving == 1){
                 schedInfo[1].n = schedInfo[1].N;
             }
@@ -256,7 +256,7 @@ void task_infraRed_log(void *param){
    append_responce(MSG_END);
 }
 
-void task_move(void *param){
+void task_stop(void *param){
     int* is_moving = (int*) param;
     pwm_stop();  //Stop motors
     *is_moving=0;
@@ -273,7 +273,7 @@ void scheduler_setup(heartbeat schedInfo[]){
     //PWM stop scheduling
     schedInfo[1].N=0;
     schedInfo[1].n=0;
-    schedInfo[1].f=&task_move;
+    schedInfo[1].f=&task_stop;
     schedInfo[1].params=(void*)(&is_moving);
     schedInfo[1].enable=0;
     

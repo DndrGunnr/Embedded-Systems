@@ -214,7 +214,6 @@ int tmr_wait_period_busy(int timer){
     return ret_val;
 }
 
-
 void tmr_wait_ms(int timer, int ms){
     int resto = ms;
         
@@ -328,6 +327,3 @@ void tmr_wait_ms(int timer, int ms){
     }
 }
 
-void algorithm(int timer, int ms){
-    tmr_wait_ms(timer, ms);
-}

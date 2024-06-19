@@ -25,10 +25,12 @@
  * Comments:
  * Revision history: 
  */
+
 #define LV_CONV 1024.0
 #define VDD 3.3
 #define VOLT_DIVIDER 3
 
+// structure for holding converted data from the adc
 typedef struct{
     double battery;
     double ir;

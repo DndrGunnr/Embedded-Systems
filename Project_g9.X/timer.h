@@ -37,9 +37,6 @@
 #define TIMER4 4
 #define TIMER5 5
 
-// TODO Insert appropriate #include <>
-
-// TODO Insert C++ class definitions if appropriate
 
 //function declarations
 void tmr_setup_period(int timer, int ms);
@@ -50,4 +47,3 @@ int tmr_convert_prescaler(int prescaler_bits);
 int tmr_wait_period(int timer);
 int tmr_wait_period_busy(int timer);
 void tmr_wait_ms(int timer, int ms);
-void algorithm(int timer, int ms);
