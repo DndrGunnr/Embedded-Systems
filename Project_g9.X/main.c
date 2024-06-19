@@ -162,7 +162,8 @@ int main(void) {
     while(1){
         scheduler(schedInfo, MAX_TASKS);
         if(data_available == 1){
-            for(int16_t i = 0; i<get_data_nuber(); i++){
+            int pl = get_data_nuber();
+            for(int16_t i = 0; i<pl; i++){
                 if(parse_byte(&pstate, get_char()) == NEW_MESSAGE){
                     //LATGbits.LATG9 = (!LATGbits.LATG9);
                     if(buff.is_full == 0){
@@ -194,6 +195,7 @@ int main(void) {
                     }else{
                         append_responce(COMM_BAD);
                         discard_command();
+                        //print_buff_log();
                         /*for (int16_t i = 0; i < MAX_COMMAND; i++) {
                             print_comm_log(command_queue[i].x, command_queue[i].t);
                         }*/
@@ -209,7 +211,7 @@ int main(void) {
                 }else{
                     move_command_head();
                 }
-                //print_buff_log();
+                
             }
         }
         
@@ -352,14 +354,14 @@ void scheduler_setup(heartbeat schedInfo[]){
     schedInfo[3].n=-1;
     schedInfo[3].f=&task_infraRed_log;
     schedInfo[3].params=(void*)(&(adc_value.ir));
-    schedInfo[3].enable=1;
+    schedInfo[3].enable=0;
    
     // battery logging 
     schedInfo[4].N=1000;
     schedInfo[4].n=-2;
     schedInfo[4].f=&task_battery_log;
     schedInfo[4].params=(void*)(&(adc_value.battery));
-    schedInfo[4].enable=1;
+    schedInfo[4].enable=0;
 }
 // -------------------------------------------------------- TASK FUNCTION ----------------------------------------------------------- //
 // ---------------------------------------------------------------------------------------------------------------------------------- //
