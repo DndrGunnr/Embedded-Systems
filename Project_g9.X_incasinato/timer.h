@@ -26,60 +26,28 @@
  * Revision history: 
  */
 
-// This is a guard condition so that contents of this file are not included
-// more than once.  
-#define	XC_HEADER_TEMPLATE_H
 
-#include <xc.h> // include processor files - each processor file is guarded.  
-#include "stdio.h"
-#include "string.h"
-#include "timer.h"
+#include <xc.h> // include processor files - each processor file is guarded.
 
-#define RX_DIM 200
-#define TX_DIM 200
-#define TX 1
-#define RX 2
-#define AK_DIM 8 
-#define HD_DIM 7
-#define COMM_GOOD 1
-#define COMM_BAD  2
-#define BATTERY   3
-#define IR        4
-#define MSG_END   5
-#define MAX_COMMAND 10
+#define FCY 72000000
+#define TIMER_LIMIT 65535
+#define TIMER1 1
+#define TIMER2 2
+#define TIMER3 3
+#define TIMER4 4
+#define TIMER5 5
 
-typedef struct{
-    int head;
-    int tail;
-    int is_full;
-}buffer;
+// TODO Insert appropriate #include <>
 
-// set all UART mode, pin, interrupts ecc
-int16_t uart_setup(int16_t TX_interrupt_on, int16_t TX_interrupt_type, int16_t RX_interrupt_on, int16_t RX_interrupt_type); 
+// TODO Insert C++ class definitions if appropriate
 
-void save_char(char carattere);
+//function declarations
+void tmr_setup_period(int timer, int ms);
+int tmr_compute_prescaler(int ms);
+float tmr_counter_calculation(int ms, int prescaler);
+int tmr_convert_prescaler(int prescaler_bits);
 
-int16_t buffer_empty(int mode);
-
-void discard_command();
-
-char get_char();
-
-int16_t parse_payload(char *payload, int16_t payload_dim);
-
-int16_t get_buffer_length(buffer*);
-
-void append_responce(int16_t type);
-void append_number(double value, int16_t type);
-
-int16_t get_buffer_head(int);
-char *get_buffer(int);
-void move_buffer_head(int);
-
-
-void buffer_init(buffer*);
-
-
-void print_buff_log(int mode);
-
-int16_t get_data_nuber();
+int tmr_wait_period(int timer);
+int tmr_wait_period_busy(int timer);
+void tmr_wait_ms(int timer, int ms);
+void algorithm(int timer, int ms);

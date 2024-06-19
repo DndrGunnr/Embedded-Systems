@@ -105,12 +105,10 @@ int16_t buffer_empty(int mode){
 
 int16_t get_buffer_length(buffer* buff){
     int length;
-    //------------------------------cancellare----------------------------------
     //if the function is called without providing the argument, it is assumed the buffer can be retrieved
     //from the global scope of uart.c
     /*if (buff == NULL)
         buff=&rx_buffer_idx;*/
-    //------------------------------cancellare----------------------------------
 
     if (buff->tail > buff->head)
         length = buff->tail - buff->head;
